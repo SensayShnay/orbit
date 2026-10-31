@@ -1,0 +1,6 @@
+-- Weekly message sync (already applied to the project by Claude). Kept here for reference.
+-- Functions: orbit_sync_apply (merge counts, never shrink history, rebuild auto touches),
+-- orbit_wrapped_apply (replace one Wrapped year), orbit_handles (contact -> phone/email map),
+-- orbit_summary (light view for the weekly note), orbit_sync_ingest (token-checked entry point),
+-- table sync_tokens (sha256 of the Mac's sync token; no client access).
+-- See supabase/functions/orbit-sync for the HTTPS endpoint and tools/orbit_push.py for the Mac side.
