@@ -1,6 +1,6 @@
 #orbitLogin{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:radial-gradient(120% 80% at 50% 0%,#1c2240,#0c0f1f);color:#eef0ff;font:16px "Inter",system-ui,sans-serif}
 .ol-box{width:min(100%,360px);display:grid;gap:12px;text-align:center}
-.ol-logo{font-size:44px;color:#e7b54a}.ol-box h1{margin:0;font:700 32px "Bricolage Grotesque",system-ui,sans-serif}.ol-box p{margin:0;color:#a9adc9}
+.ol-logo{justify-self:center}.ol-box h1{margin:0;font:700 32px "Bricolage Grotesque",system-ui,sans-serif}.ol-box p{margin:0;color:#a9adc9}
 .ol-box input{background:#151a30;border:1px solid #343c68;border-radius:14px;padding:14px;color:#fff;font:16px inherit}
 .ol-box button{border:0;border-radius:14px;padding:14px;font:600 16px inherit;background:#e7b54a;color:#0c0f1f;cursor:pointer}
 .ol-box .ol-alt{background:none;color:#a9adc9;font-weight:500}
