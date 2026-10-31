@@ -60,7 +60,7 @@ h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.015em;text-
 .side .grow{flex:1}
 .kbd{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:10px;padding:9px 10px;color:var(--muted);font-weight:500}
 .kbd span{margin-left:auto;font:500 11px var(--mono);border:1px solid var(--line2);border-radius:5px;padding:1px 5px}
-.main{min-width:0;padding-block:20px 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.main{min-width:0;padding-block:calc(20px + env(safe-area-inset-top,0px)) 120px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 @media (min-width:861px){.main{padding-left:32px;padding-right:max(32px,env(safe-area-inset-right,0px))}}
 .top{display:flex;align-items:center;gap:10px;margin-bottom:18px;min-height:44px}
 .top h1{font-size:30px;line-height:1.05}
@@ -136,6 +136,7 @@ button.stat:hover{border-color:var(--line2)}
 #mapSvg{display:block;width:100%;height:auto;cursor:grab}
 #mapSvg:active{cursor:grabbing}
 .mocean0{stop-color:color-mix(in srgb,var(--orbit) 26%,var(--bg2))}.mocean1{stop-color:color-mix(in srgb,var(--orbit) 42%,var(--bg))}
+.mmoving .mtex,.mmoving .mcounty,.mmoving .mlabel{display:none}.mmoving .mcountries{filter:none}#mapSvg g{will-change:transform}
 .msea{stroke:color-mix(in srgb,var(--orbit) 40%,transparent);stroke-width:1;vector-effect:non-scaling-stroke}
 .mgrat{fill:none;stroke:color-mix(in srgb,var(--orbit) 35%,transparent);stroke-width:.5;stroke-dasharray:1 3;vector-effect:non-scaling-stroke}
 .mcoast{fill:none;stroke:color-mix(in srgb,var(--orbit) 30%,transparent);stroke-width:5;stroke-linejoin:round;vector-effect:non-scaling-stroke;opacity:.6}
@@ -240,6 +241,7 @@ button.stat:hover{border-color:var(--line2)}
 .ozbtns{position:absolute;top:12px;right:12px;display:flex;flex-direction:column;gap:6px}
 .ozbtns button{width:34px;height:34px;border-radius:50%;border:1px solid var(--line);background:color-mix(in srgb,var(--surface) 82%,transparent);color:var(--ink);font:600 18px/1 Figtree,sans-serif;cursor:pointer}
 .ozbtns button:disabled{opacity:.35;cursor:default}
+.opeek{position:absolute;left:10px;right:10px;bottom:10px;display:flex;align-items:center;gap:10px;justify-content:space-between;background:var(--surface);border:1px solid var(--line2);border-radius:16px;padding:10px 10px 10px 12px;box-shadow:var(--shadow);z-index:3}.opk-who{display:flex;align-items:center;gap:10px;min-width:0}.opk-who b{display:block;font-size:15px}.opk-who span{display:block;font-size:12.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.opk-who>div{min-width:0}.opk-acts{display:flex;gap:6px;flex:none}.opk-acts .btn{min-height:40px}
 .ohint{position:absolute;bottom:10px;left:0;right:0;text-align:center;font-size:11.5px;color:var(--faint);pointer-events:none}
 @media (max-width:520px){.ozseg button{padding:6px 9px;font-size:12px}.ozcount{display:none}}
 .tip{position:absolute;pointer-events:none;background:var(--surface);border:1px solid var(--line2);border-radius:12px;padding:8px 11px;box-shadow:var(--shadow);font-size:13px;min-width:140px;max-width:240px;transform:translate(-50%,calc(-100% - 14px))}
@@ -1044,7 +1046,7 @@ function initMap(){
   g.append('path').datum(d3.geoGraticule10()).attr('d',path).attr('class','mgrat');
   const land=topojson.feature(W,W.objects.land);
   g.append('path').datum(land).attr('d',path).attr('class','mcoast');
-  const cg=g.append('g').attr('filter','url(#mShadow)');
+  const cg=g.append('g').attr('class','mcountries').attr('filter','url(#mShadow)');
   cg.selectAll('path').data(topojson.feature(W,W.objects.countries).features).join('path').attr('d',path).attr('class',d=>'mland t'+(hash(String(d.id||d.properties.name))%5));
   g.append('path').datum(land).attr('d',path).attr('class','mtex').attr('filter','url(#mNoise)');
   g.append('path').datum(topojson.mesh(W,W.objects.countries,(a,b)=>a!==b)).attr('d',path).attr('class','mborder');
@@ -1053,7 +1055,7 @@ function initMap(){
   g.append('path').datum(topojson.mesh(S,S.objects.states,(a,b)=>a!==b)).attr('d',path).attr('class','mstate');
   g.append('path').datum({type:'LineString',coordinates:[[-74.02,40.70],[-73.97,40.80],[-73.93,40.88],[-73.90,41.00],[-73.89,41.08],[-73.95,41.20],[-73.97,41.30],[-73.96,41.39],[-73.99,41.46],[-73.98,41.53],[-73.95,41.62],[-73.94,41.72],[-73.96,41.82],[-73.95,41.93],[-73.94,42.03],[-73.92,42.12],[-73.83,42.22],[-73.78,42.33],[-73.76,42.45],[-73.75,42.55],[-73.73,42.65],[-73.69,42.75]]}).attr('d',path).attr('class','mriver');
   const mk=svg.append('g').attr('class','mmarks');
-  const zoom=d3.zoom().scaleExtent([1,600]).translateExtent([[-w*.2,-h*.2],[w*1.2,h*1.2]]).on('zoom',ev=>{g.attr('transform',ev.transform);g.classed('zclose',ev.transform.k>7).classed('zmid',ev.transform.k>2.5);mapState.t=ev.transform;drawMapMarkers()});
+  const zoom=d3.zoom().scaleExtent([1,600]).translateExtent([[-w*.2,-h*.2],[w*1.2,h*1.2]]).on('start',()=>svg.classed('mmoving',true)).on('zoom',ev=>{g.attr('transform',ev.transform);mapState.t=ev.transform;if(!mapRaf)mapRaf=requestAnimationFrame(()=>{mapRaf=0;moveMapMarkers()})}).on('end',ev=>{svg.classed('mmoving',false);g.classed('zclose',ev.transform.k>7).classed('zmid',ev.transform.k>2.5);drawMapMarkers()});
   svg.call(zoom).on('dblclick.zoom',null);
   mapState={svg,g,mk,proj,zoom,w,h,t:d3.zoomIdentity};
   drawMapMarkers();
@@ -1064,12 +1066,14 @@ function mapZoomTo(key){document.querySelectorAll('[data-mz]').forEach(b=>b.setA
   const p0=proj([b[0][0],b[1][1]]),p1=proj([b[1][0],b[0][1]]),k=Math.min(600,.92/Math.max((p1[0]-p0[0])/w,(p1[1]-p0[1])/h)),cx=(p0[0]+p1[0])/2,cy=(p0[1]+p1[1])/2;
   svg.transition().duration(900).call(zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-cx,-cy))}
 function mapFocus(P){const {svg,zoom,proj,w,h,t}=mapState;const [x,y]=proj(P.ll);const k=Math.max(t.k,P.k&&/hudson|kingston|woodstock/.test(P.k)?60:12);svg.transition().duration(800).call(zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-x,-y))}
+let mapRaf=0;
+function moveMapMarkers(){if(!mapState)return;const {mk,proj,t}=mapState;mk.selectAll('g.mpin').attr('transform',function(){const ll=this.__ll;if(!ll)return this.getAttribute('transform');const [x,y]=t.apply(proj(ll));return `translate(${x},${y})`})}
 function drawMapMarkers(){if(!mapState)return;const {mk,proj,t}=mapState;const {places}=mapPlaces();
   const pts=places.map(P=>{const [x,y]=t.apply(proj(P.ll));return {P,x,y,n:P.ppl.length}}).sort((a,b)=>b.n-a.n);
   const groups=[];pts.forEach(pt=>{const r=pt=>7+Math.sqrt(pt.n)*3.2;const g=groups.find(G=>Math.hypot(G.x-pt.x,G.y-pt.y)<r(G)+r(pt)-4);if(g){g.items.push(pt);g.n+=pt.n}else groups.push({x:pt.x,y:pt.y,n:pt.n,items:[pt]})});
   const C=colors();mk.selectAll('*').remove();
   groups.forEach(G=>{const one=G.items.length===1,P=G.items[0].P,sel=one&&mapSel===P.k,r=7+Math.sqrt(G.n)*3.2;
-    const a=mk.append('g').attr('class','mpin'+(sel?' sel':'')).attr('transform',`translate(${G.x},${G.y})`).style('cursor','pointer')
+    const a=mk.append('g').attr('class','mpin'+(sel?' sel':'')).attr('transform',`translate(${G.x},${G.y})`).property('__ll',P.ll).style('cursor','pointer')
       .on('click',ev=>{ev.stopPropagation();if(one){mapSel=P.k;mapListHTML();drawMapMarkers()}else{const xs=G.items.map(i=>i.P.ll[0]),ys=G.items.map(i=>i.P.ll[1]);const pad=.4;const b=[[Math.min(...xs)-pad,Math.min(...ys)-pad],[Math.max(...xs)+pad,Math.max(...ys)+pad]];MAP_VIEWS._tmp=b;mapZoomTo('_tmp')}});
     a.append('circle').attr('r',r+5).attr('class','mhalo');
     a.append('circle').attr('r',r).attr('class','mdot');
@@ -1115,7 +1119,7 @@ function buildStars(){
 }
 function levelZoom(lv){if(lv===0)return 1;const vis=orbitStars.filter(s=>inLevel(s,lv));if(!vis.length)return 1;const m=Math.max(...vis.map(s=>s.r));return Math.min(6.5,Math.max(1,.9/(m+.02)))}
 function setLevel(lv,quiet){orbitLevel=Math.max(0,Math.min(2,lv));try{localStorage.setItem('orbitLevel',orbitLevel)}catch(_){}
-  zTarget=levelZoom(orbitLevel);orbitHover=null;const tip=$('tip');if(tip)tip.hidden=true;
+  zTarget=levelZoom(orbitLevel);orbitHover=null;const tip=$('tip');if(tip)tip.hidden=true;const opk=$('opeek');if(opk)opk.hidden=true;peekId=null;
   document.querySelectorAll('[data-olv]').forEach(b=>b.setAttribute('aria-pressed',String(+b.dataset.olv===orbitLevel)));
   const n=orbitStars.filter(s=>inLevel(s,orbitLevel)).length,c=$('ozCount');if(c)c.textContent=orbitLevel?`${n} ${n===1?'person':'people'}`:'';
   const zi=$('ozIn'),zo=$('ozOut');if(zi)zi.disabled=orbitLevel===2;if(zo)zo.disabled=orbitLevel===0;
@@ -1125,10 +1129,10 @@ function colors(){return {near:css('--accent'),year:css('--ink'),far:css('--mute
 function renderOrbit(){
   if(builtFor!=='orbit'){
     builtFor='orbit';
-    $('view').innerHTML=`<div class="orbitwrap" id="ow"><canvas id="orbitCanvas" aria-label="Orbit map of your people"></canvas><div class="tip" id="tip" hidden></div>
+    $('view').innerHTML=`<div class="orbitwrap" id="ow"><canvas id="orbitCanvas" aria-label="Orbit map of your people"></canvas><div class="tip" id="tip" hidden></div><div class="opeek" id="opeek" hidden></div>
       <div class="ozoom" role="group" aria-label="Zoom"><div class="ozseg">${LEVELS.map((l,i)=>`<button type="button" data-olv="${i}" aria-pressed="${i===orbitLevel}">${l[0]}</button>`).join('')}</div><span class="ozcount" id="ozCount"></span></div>
       <div class="ozbtns"><button type="button" id="ozIn" aria-label="Zoom in">+</button><button type="button" id="ozOut" aria-label="Zoom out">−</button></div>
-      <div class="ohint" id="ohint">Hold a star to send them energy</div></div>
+      <div class="ohint" id="ohint">${matchMedia('(hover: none)').matches?'Tap a star to see who it is. Hold to send energy':'Hold a star to send them energy'}</div></div>
       <div class="legend"><span><i style="background:var(--inner)"></i>Inner sphere</span><span><i style="background:var(--accent)"></i>Talked in the last 2 months</span><span><i style="background:var(--ink)"></i>This year</span><span><i style="background:var(--muted)"></i>Longer ago</span><span><i style="background:var(--fam)"></i>Family</span><span><i style="background:var(--orbit)"></i>Long Orbit</span><span><i style="background:var(--outer)"></i>Outer Orbit</span><span><i style="background:var(--mem)"></i>In memory</span><span>Bigger star = more messages</span></div>
       <div class="bands" id="bands"></div>`;
     const cv=$('orbitCanvas'), at=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]};
@@ -1141,16 +1145,16 @@ function renderOrbit(){
     cv.addEventListener('pointerdown',e=>{
       if(!pinch)pinch={pts:new Map(),d0:0};pinch.pts.set(e.pointerId,at(e));
       if(pinch.pts.size>1){if(energy)endEnergy(false);return}
-      const [mx,my]=at(e);const s=pickStar(mx,my,e.pointerType==='mouse'?14:22);suppressClick=false;
+      const [mx,my]=at(e);lastPtr=e.pointerType;const s=pickStar(mx,my,e.pointerType==='mouse'?14:22);suppressClick=false;
       if(s){orbitHover=null;$('tip').hidden=true;energy={s,t0:performance.now(),x0:mx,y0:my,on:false,last:0,id:e.pointerId};try{cv.setPointerCapture(e.pointerId)}catch(_){}kick()}});
-    const up=e=>{if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy&&energy.id===e.pointerId)endEnergy(true)};
+    const up=e=>{if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy&&energy.id===e.pointerId){const en=energy;endEnergy(true);if(!en.on&&e.pointerType!=='mouse'){if(peekId===en.s.p.id)openPerson(en.s.p.id);else peek(en.s)}}};
     cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',e=>{if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy)endEnergy(false)});
     cv.addEventListener('touchstart',e=>{if(e.touches.length>1){e.preventDefault();return}const t=e.touches[0];const [mx,my]=at(t);if(hitStar(mx,my,22))e.preventDefault()},{passive:false});
     cv.addEventListener('touchmove',e=>{if(energy||e.touches.length>1)e.preventDefault()},{passive:false});
     cv.addEventListener('contextmenu',e=>e.preventDefault());
     cv.addEventListener('mouseleave',()=>{orbitHover=null;$('tip').hidden=true});
     cv.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const n=performance.now();if(n-(cv._wz||0)<450)return;cv._wz=n;setLevel(orbitLevel+(e.deltaY<0?1:-1))},{passive:false});
-    cv.addEventListener('click',e=>{if(suppressClick){suppressClick=false;return}const [mx,my]=at(e);const s=pickStar(mx,my,18);if(s)openPerson(s.p.id)});
+    cv.addEventListener('click',e=>{if(suppressClick){suppressClick=false;return}const [mx,my]=at(e);const s=hitStar(mx,my,lastPtr==='mouse'?18:24);if(lastPtr==='mouse'){if(s)openPerson(s.p.id);return}if(!s){peek(null);return}if(peekId===s.p.id){openPerson(s.p.id);return}peek(s)});
     $('ow').addEventListener('click',e=>{const b=e.target.closest('[data-olv]');if(b){setLevel(+b.dataset.olv);return}if(e.target.id==='ozIn')setLevel(orbitLevel+1);if(e.target.id==='ozOut')setLevel(orbitLevel-1)});
     buildStars(); zCur=zTarget=levelZoom(orbitLevel);
   }
@@ -1213,6 +1217,12 @@ function drawOrbit(){
   if(orbitHover){const [px,py]=pos.get(orbitHover.p.id);const tip=$('tip');tip.style.left=px+'px';tip.style.top=py+'px'}
   if(!reduce||moving||energy||sparks.length) orbitRAF=requestAnimationFrame(drawOrbit);
 }
+let lastPtr='mouse',peekId=null;
+function peek(s){const el=$('opeek');if(!el)return;$('tip').hidden=true;if(!s){peekId=null;orbitHover=null;el.hidden=true;kick();return}
+  const p=s.p,en=p.energy,n=msgCount(p);peekId=p.id;orbitHover=s;
+  el.innerHTML=`<div class="opk-who">${av(p,'sm')}<div><b>${esc(fullName(p))}</b><span>${esc(p.circle||'Friend')} · ${esc(ago(lastSeen(p)))}${n?' · '+n.toLocaleString()+' messages':''}${en&&en.count?' · ✨ '+en.count:''}</span></div></div><div class="opk-acts"><button type="button" class="btn small primary" data-id="${esc(p.id)}">Open</button><button type="button" class="btn small" data-act="opkclose" aria-label="Close">✕</button></div>`;
+  el.hidden=false;kick()}
+document.addEventListener('click',e=>{if(e.target.closest('[data-act="opkclose"]'))peek(null)});
 function endEnergy(done){const e=energy;energy=null;if(!e)return;
   if(e.on&&done){const s=e.s,g=orbitGeom(),[px,py]=starPos(s,performance.now()-orbitT0,g);for(let i=0;i<26;i++){const a=Math.random()*Math.PI*2,sp=1+Math.random()*2.2;sparks.push({x:px,y:py,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,life:0,max:700+Math.random()*700,r:2+Math.random()*3.5,rot:Math.random()*3})}
     const held=Math.round((performance.now()-e.ton)/1000),p=s.p,en=p.energy||{};save(p.id,{energy:{count:(en.count||0)+1,last:TODAY,seconds:(en.seconds||0)+held}},true);toast('✨ Energy sent to '+(p.first||fullName(p)));kick()}
