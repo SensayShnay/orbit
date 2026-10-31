@@ -10,7 +10,7 @@ window.ORBIT_BLOB=id=>BLOB_BASE()+id+'.jpg';
 // ---------- login ----------
 function loginUI(msg){let el=document.getElementById('orbitLogin');
   if(!el){el=document.createElement('div');el.id='orbitLogin';document.body.appendChild(el)}
-  el.innerHTML=`<form class="ol-box" autocomplete="on"><svg class="ol-logo" viewBox="0 0 100 100" width="64" height="64" aria-hidden="true"><circle cx="50" cy="50" r="19" fill="none" stroke="#F6F3EC" stroke-width="9"/><circle cx="63.4" cy="36.6" r="8" fill="#E9B44C" stroke="#1c2240" stroke-width="4"/></svg><h1>Orbit</h1><p>Sign in to see your people.</p>
+  el.innerHTML=`<form class="ol-box" autocomplete="on"><svg class="ol-logo" viewBox="0 0 100 100" width="64" height="64" aria-hidden="true"><circle cx="50" cy="50" r="24" fill="none" stroke="#F6F3EC" stroke-width="11.25"/><circle cx="66.97" cy="33.03" r="10" fill="#E9B44C" stroke="#1c2240" stroke-width="5"/></svg><h1>Orbit</h1><p>Sign in to see your people.</p>
     <input name="email" type="email" placeholder="Email" required autocomplete="username">
     <input name="pw" type="password" placeholder="Password" required minlength="6" autocomplete="current-password">
     <button type="submit" data-m="in">Sign in</button><button type="button" class="ol-alt" data-m="up">First time? Create your account</button>
