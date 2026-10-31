@@ -10,7 +10,7 @@ Your relationship tracker as a real iPhone app. Same Orbit you built in Claude, 
 3. **Authentication → Sign In / Providers → Email**: leave Email on. For just you, turn **Confirm email** off so you can sign in right away.
 
 ### 2. AI (drafts, personal reads, spins)
-1. **Edge Functions → Deploy a new function → Via editor**, name it `ai`.
+1. **Edge Functions → Deploy a new function → Via editor**, name it `ai`. (If Supabase gives it a random name like `bright-action`, put that name in `src/config.js` as `aiFunction`.)
 2. Paste `supabase/functions/ai/index.ts`, deploy.
 3. **Edge Functions → Secrets** → add `ANTHROPIC_API_KEY` with your key from console.anthropic.com.
 

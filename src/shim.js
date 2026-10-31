@@ -55,7 +55,7 @@ const db={
     async delete(){local(coll,id,null);const {error}=await sb.from(T).delete().eq('coll',coll).eq('id',id);if(error)throw err(error)}}}};
 
 // ---------- sample (Claude via your Supabase function) ----------
-async function sample(input,opts={}){const {data,error}=await sb.functions.invoke('ai',{body:{input,system:opts.system,modelTier:opts.modelTier}});
+async function sample(input,opts={}){const {data,error}=await sb.functions.invoke(C.aiFunction||'ai',{body:{input,system:opts.system,modelTier:opts.modelTier}});
   if(error){let code='unavailable';try{const b=await error.context.json();code=b.code||code}catch(_){}const e=new Error(error.message);e.code=code;throw e}
   const text=data.text||'';if(opts.onText)opts.onText({text,delta:text});return {text,truncated:!!data.truncated}}
 sample.json=async(input,opts)=>{const r=await sample(input,opts);const m=r.text.match(/[\[{][\s\S]*[\]}]/);return JSON.parse(m?m[0]:r.text)};
