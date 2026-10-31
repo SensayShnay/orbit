@@ -1,0 +1,7 @@
+node_modules/
+www/
+test/
+orbit-backup.json
+ios/App/Pods/
+ios/App/App/public/
+.DS_Store
