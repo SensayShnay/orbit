@@ -20,6 +20,12 @@
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Orbit uses the camera when you take a photo for a signal or a profile picture.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Orbit lets you pick a photo for a signal or a profile picture.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Orbit can save photos you choose to your library.</string>
 	<key>NSContactsUsageDescription</key>
 	<string>Orbit uses your contacts to help you pick your people. Only the people you choose are saved.</string>
 	<key>ITSAppUsesNonExemptEncryption</key>
