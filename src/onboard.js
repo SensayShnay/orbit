@@ -189,6 +189,7 @@ function ready(){const ps=pickedList(),c={inner:0,close:0,friends:0,family:0};ps
  <div class="onb-stats">${['inner','close','friends','family'].filter(k=>c[k]).map(k=>`<div><b style="color:${LAYER_COLOR[k]}">${c[k]}</b><small>${LAYER_NAME[k]}</small></div>`).join('')}</div>
  <p class="onb-msg" role="status"></p><div class="onb-grow"></div><button type="button" class="onb-cta" id="oNext">Open my orbit</button>`);
  root.querySelector('#oNext').onclick=async e=>{const b=e.currentTarget,msg=root.querySelector('.onb-msg');b.disabled=true;b.textContent='Setting up…';
+  if(S.notif){try{const C=window.Capacitor;if(C&&C.isNativePlatform&&C.isNativePlatform()&&C.Plugins.LocalNotifications)await C.Plugins.LocalNotifications.requestPermissions()}catch(_){}}
   try{await save();try{localStorage.removeItem(KEY())}catch(_){}close();done()}catch(err){b.disabled=false;b.textContent='Try again';msg.textContent='Couldn’t save just now: '+(err.message||err)}}}
 
 const slug=s=>String(s).toLowerCase().normalize('NFKD').replace(/[^\w\s-]/g,'').trim().replace(/\s+/g,'-').slice(0,40)||'person';

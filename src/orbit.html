@@ -313,7 +313,7 @@ select.f{border:1px solid var(--line);background:var(--surface);border-radius:11
 .fux{background:none;border:0;color:var(--faint);font:500 16px/1 var(--body);cursor:pointer;padding:0 4px;border-radius:6px}.fux:hover{color:var(--danger)}
 .fuadd{display:flex;gap:8px;margin-top:10px}.fuadd input{flex:1;min-width:0;border:1px solid var(--line);background:var(--bg2);border-radius:9px;padding:7px 10px;font:14px var(--body);color:var(--ink)}
 .fuwrap{position:relative;display:flex}.fuwrap>.pc{flex:1;width:100%;padding-right:40px}.fuwrap>.fux{position:absolute;top:8px;right:8px;background:var(--surface);border:1px solid var(--line);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%}
-.hdbox .inner,.kidsbox .inner{display:grid;gap:14px}.kid{border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}.kidtop{display:flex;align-items:center;gap:8px}.kidtop b{font:700 15px var(--display)}.kidtop .btn{margin-left:auto}.myhd{display:grid;gap:10px;margin-top:14px}
+.hdbox .inner,.kidsbox .inner,.remindbox .inner{display:grid;gap:14px}.rchips{display:flex;flex-wrap:wrap;gap:8px}.rchip{min-height:40px;padding:0 13px;border-radius:20px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);font:500 14px var(--body);cursor:pointer}.rchip small{color:var(--accent);font-size:11.5px;font-weight:600;margin-left:2px}.rchip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}.rchip[aria-pressed="true"] small{color:inherit}.kid{border:1px solid var(--line);border-radius:14px;padding:12px;display:grid;gap:10px}.kidtop{display:flex;align-items:center;gap:8px}.kidtop b{font:700 15px var(--display)}.kidtop .btn{margin-left:auto}.myhd{display:grid;gap:10px;margin-top:14px}
 .hdsec{display:grid;gap:8px}.hdsec .gl{margin:0}
 .hdsign{display:flex;align-items:center;gap:12px}.hdglyph{font-size:30px;line-height:1}
 .hdsign b{display:block;font:700 17px var(--display)}.hdsign small{color:var(--muted)}
@@ -680,6 +680,24 @@ function myHdHTML(){const P=SET.profile,z=signOf(P.birthday),ch=hdChart(P.birthd
   ${ty?`<p class="hdp"><b>${esc(P.hdType)}.</b> Your strategy: ${esc(ty[0].toLowerCase())}. You feel ${esc(ty[1].toLowerCase())} when aligned and ${esc(ty[2].toLowerCase())} when off track.</p>`:''}
   ${au?`<p class="hdp"><b>${esc(P.hdAuthority)} authority.</b> ${esc(au.replace(/\bthem\b/g,'you').replace(/\bthey\b/g,'you').replace(/\btheir\b/g,'your').replace(/^Don’t push decisions/,'Don’t rush decisions').replace(/^Ask simple/,'Answer simple').replace(/^Let you talk/,'Talk'))}</p>`:''}
   <p class="hint">${P.birthTime&&P.birthPlace?'Got your time and place. Plug them into any free Human Design calculator to confirm type, authority and profile, then set them above.':'Gates come from your birthday alone. Add your birth time and place, then use any free Human Design calculator to get your type and authority.'}</p></div>`}
+let remindOpen=false;
+const remAdd=(base,n)=>{const d=new Date(base+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const REMIND_OPTS=[[14,'Every 2 weeks'],[30,'Monthly'],[91,'Every 3 months'],[182,'Every 6 months'],[365,'Yearly']];
+function remindSuggest(p){if(p.circle==='Family')return 30;if(isInner(p)||p.layer==='inner')return 14;if(p.layer==='close')return 30;if(!isActive(p))return 365;return 91}
+function remindDue(p){const r=p.remind;if(!r)return null;if(r.date)return r.date;if(r.every)return remAdd(lastSeen(p)||r.setAt||TODAY,r.every);return null}
+function remindLabel(p){const r=p.remind;if(!r)return 'Off';if(r.date)return 'On '+new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});const o=REMIND_OPTS.find(x=>x[0]===r.every);return o?o[1]:'Every '+r.every+' days'}
+function remindHTML(p){const r=p.remind||null,sug=remindSuggest(p),due=remindDue(p),cur=r?(r.date?'date':r.every):'';
+  const chip=(v,l)=>`<button type="button" class="rchip" data-remind="${v}" aria-pressed="${String(cur)===String(v)}">${esc(l)}${v===sug&&!r?' <small>Suggested</small>':''}</button>`;
+  const when=due?(due<=TODAY?'<b>Due now.</b> Reach out and log it, and the next one resets.':`Next reminder <b>${new Date(due+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'})}</b>${r.every?', counted from the last time you talked':''}.`):'Orbit will only nudge you about them with your usual drift alerts.';
+  return `<details class="more remindbox" id="remindBox"${remindOpen?' open':''}><summary>Remind me <span class="actn">${esc(remindLabel(p))}</span></summary><div class="inner">
+   <div class="rchips">${chip('','Off')}${REMIND_OPTS.map(o=>chip(o[0],o[1])).join('')}${chip('date','On a date')}</div>
+   ${cur==='date'?`<div class="fld"><label for="remindDate">Remind me on</label><input id="remindDate" type="date" value="${esc(r.date||'')}" min="${TODAY}"></div>`:''}
+   <p class="hint" style="margin:0">${when}</p></div></details>`}
+document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='remindBox')remindOpen=e.target.open},true);
+document.addEventListener('click',e=>{const b=e.target.closest('[data-remind]');if(!b||!selected)return;const v=b.dataset.remind;let r=null;
+  if(v==='date'){const p=people.get(selected);r={date:(p.remind&&p.remind.date)||remAdd(TODAY,7)}}else if(v)r={every:+v,setAt:TODAY};
+  remindOpen=true;save(selected,{remind:r},true);const box=$('remindBox');if(box)box.outerHTML=remindHTML(people.get(selected));if(r)toast('Reminder set')});
+document.addEventListener('change',e=>{if(e.target.id!=='remindDate'||!selected||!e.target.value)return;save(selected,{remind:{date:e.target.value}},true);const box=$('remindBox');if(box)box.outerHTML=remindHTML(people.get(selected))});
 let kidsOpen=false;
 function kidsHTML(p){const ks=p.kids||[];return `<details class="more kidsbox" id="kidsBox"${kidsOpen?' open':''}><summary>Children${ks.length?` <span class="actn">${ks.length}</span>`:''}</summary><div class="inner">
   ${ks.length?'':`<p class="hint" style="margin:0">No kids saved yet. Add them and their birthdays show up on Home next to ${esc(p.first||'their parent')}.</p>`}
@@ -1335,6 +1353,7 @@ function renderSug(){
 
 // ---------- detail sheet ----------
 function openPerson(id){selected=id;confirmDel=false;mergeFrom=null;kEdit=null;lastRenderedId=null;renderDetail();$('detail').scrollTop=0}
+window.orbitOpenPerson=id=>{if(people.has(id))openPerson(id)};
 function closePerson(){if(draft.ctl)draft.ctl.abort();selected=null;renderDetail()}
 function fieldHTML([k,label,type,wide],p){const v=p[k]??'';const ctrl=type==='area'?`<textarea id="f-${k}" data-k="${k}" rows="2">${esc(v)}</textarea>`:`<input id="f-${k}" data-k="${k}" type="${type==='date'?'date':type==='number'?'number':'text'}" value="${esc(v)}">`;return `<div class="fld ${wide||type==='area'?'full':''}"><label for="f-${k}">${label}</label>${ctrl}</div>`}
 let kEdit=null, actOpen=false;
@@ -1417,7 +1436,7 @@ function renderDetail(){
         ${p.circle===MEM?`<div class="fld"><label for="f-passed">Passed away</label><input id="f-passed" data-k="passed" type="date" value="${esc(p.passed||'')}"></div><div class="fld full"><label for="f-remember">How I remember them</label><textarea id="f-remember" data-k="remember" rows="2">${esc(p.remember||'')}</textarea></div>`:''}
         ${p.circle===OUTER?`<div class="fld"><label for="f-role">Role</label><select id="f-role" data-k="role"><option value="">Pick one</option>${ROLES.map(r=>`<option${p.role===r?' selected':''}>${r}</option>`).join('')}</select></div>`:''}
         ${p.circle===ORBIT?`<div class="fld full"><label for="f-drift">What pulled us apart, or what might pull us back</label><textarea id="f-drift" data-k="drift" rows="2">${esc(p.drift||'')}</textarea></div>`:''}</div></div>
-      ${grp('Who they are',FIELDS.basics,true)}${grp('Contact',FIELDS.contact)}${grp('Our story',FIELDS.story)}${grp('Reflections',FIELDS.reflect)}${grp('Ritual',FIELDS.ritual)}${kidsHTML(p)}${hdHTML(p)}
+      ${grp('Who they are',FIELDS.basics,true)}${grp('Contact',FIELDS.contact)}${grp('Our story',FIELDS.story)}${grp('Reflections',FIELDS.reflect)}${grp('Ritual',FIELDS.ritual)}${remindHTML(p)}${kidsHTML(p)}${hdHTML(p)}
       <details class="more"${mergeFrom?' open':''}><summary>Merge a duplicate</summary><div class="inner"><p class="hint" style="margin:0">Got two cards for the same person? Pick the other card and it gets folded into this one: details fill in where this card is blank, years, touches, connections and message stats combine, and the other card is removed.</p>
         <div class="mergebox"><select id="mergeSel" aria-label="Card to merge into this one"><option value="">Pick the duplicate…</option>${[...people.values()].filter(o=>o.id!==p.id).sort((a,b)=>simScore(p,b)-simScore(p,a)||fullName(a).localeCompare(fullName(b))).map(o=>`<option value="${esc(o.id)}"${mergeFrom===o.id?' selected':''}>${esc(fullName(o))}${o.phone?' · '+esc(o.phone):''}</option>`).join('')}</select>
         ${mergeFrom&&people.has(mergeFrom)?`<button class="btn small primary" type="button" id="mergeYes">Merge ${esc(people.get(mergeFrom).first||'')} into ${esc(p.first||'this card')}</button><button class="btn small" type="button" id="mergeNo">Cancel</button>`:''}</div></div></details>

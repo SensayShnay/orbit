@@ -21,7 +21,7 @@ ${read('src/shim.css')}${read('src/onboard.css')}</style>
 <script>${read('src/config.js')}</script>
 <script>${read('src/onboard.js')}</script>
 <script>${read('src/shim.js')}</script>
-</head><body>${app}<script>${read('src/extra.js')}</script></body></html>`;
+</head><body>${app}<script>${read('src/extra.js')}</script><script>${read('src/notify.js')}</script></body></html>`;
 fs.mkdirSync('www', { recursive: true });
 fs.writeFileSync('www/index.html', html);
 console.log('Built www/index.html', (html.length / 1e6).toFixed(2) + 'MB');

@@ -2,5 +2,18 @@
   "appId": "com.sensayshnay.orbit",
   "appName": "Orbit",
   "webDir": "www",
-  "ios": { "contentInset": "never", "backgroundColor": "#0c0f1f" }
+  "ios": {
+    "contentInset": "never",
+    "backgroundColor": "#0c0f1f"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "banner",
+        "list"
+      ]
+    }
+  }
 }
