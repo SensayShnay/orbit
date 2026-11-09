@@ -1585,7 +1585,7 @@ function openDraft(id){if(draft.id!==id){draft={id,open:true,tone:'',angle:'',te
 // ---------- photos ----------
 // Crop a photo to a circle before saving: drag to move, pinch or use the slider to zoom. Resolves a 480px JPEG, or null if cancelled.
 function cropPhoto(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const img=new Image();
-  img.onerror=()=>{URL.revokeObjectURL(url);resolve(undefined)};
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('Couldn’t open that photo for cropping.');resolve(null)};
   img.onload=()=>{const m=document.createElement('div');m.className='cmodal';m.id='cropModal';
     m.innerHTML=`<div class="cmodal-box cropbox" role="dialog" aria-modal="true" aria-labelledby="cropT"><h3 id="cropT">Crop photo</h3><p>Drag to move. Pinch or slide to zoom.</p>
       <div class="cropstage"><canvas width="600" height="600"></canvas><div class="cropmask" aria-hidden="true"></div></div>
@@ -1888,8 +1888,8 @@ document.addEventListener('click',async e=>{
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='actBox')actOpen=e.target.open;if(e.target&&e.target.id==='knowBox')knowOpen=e.target.open},true);
 document.addEventListener('input',e=>{if(e.target.id==='dAngle')draft.angle=e.target.value;else if(e.target.id==='dOut'&&!draft.busy)draft.text=e.target.value});
 document.addEventListener('change',e=>{
-  if(e.target.id==='photoIn'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f&&selected)setPhoto(selected,f);return}
-  if(e.target.id==='mePhotoIn'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)setMyPhoto(f);return}
+  if(e.target.id==='photoIn'){const f0=e.target.files&&e.target.files[0],inp=e.target;if(!f0)return;const sel=selected;f0.arrayBuffer().then(buf=>{const f=new Blob([buf],{type:f0.type||'image/jpeg'});inp.value='';if(f&&sel)setPhoto(sel,f)}).catch(()=>{inp.value='';toast('Couldn’t read that photo. Try again or pick it from your library.')});return}
+  if(e.target.id==='mePhotoIn'){const f0=e.target.files&&e.target.files[0],inp=e.target;if(!f0)return;f0.arrayBuffer().then(buf=>{const f=new Blob([buf],{type:f0.type||'image/jpeg'});inp.value='';if(f)setMyPhoto(f)}).catch(()=>{inp.value='';toast('Couldn’t read that photo. Try again or pick it from your library.')});return}
   if(e.target.id==='mergeSel'){mergeFrom=e.target.value||null;lastRenderedId=null;renderDetail();return}
   if(e.target.id==='linkSel'){const v=e.target.value;if(v&&selected)setLink(selected,v,true);return}
   const k=e.target.dataset.k;if(!k||!selected)return;let v=e.target.value.trim();if(k==='yearMet')v=v?+v:'';
