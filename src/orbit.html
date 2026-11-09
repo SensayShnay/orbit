@@ -233,7 +233,7 @@ button.stat:hover{border-color:var(--line2)}
 
 /* ---------- orbit ---------- */
 .orbitwrap{position:relative;border:1px solid var(--line);border-radius:22px;background:radial-gradient(circle at 50% 50%,var(--bg2),var(--bg) 70%);overflow:hidden}
-#orbitCanvas{display:block;width:100%;touch-action:manipulation;cursor:crosshair;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#orbitCanvas{display:block;width:100%;touch-action:none;cursor:grab;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
 .ozoom{position:absolute;top:12px;left:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;max-width:calc(100% - 70px)}
 .ozseg{display:flex;background:color-mix(in srgb,var(--surface) 82%,transparent);border:1px solid var(--line);border-radius:999px;padding:3px;backdrop-filter:blur(6px)}
 .ozseg button{border:0;background:none;color:var(--muted);font:600 12.5px Figtree,sans-serif;padding:6px 11px;border-radius:999px;cursor:pointer;white-space:nowrap}
@@ -367,6 +367,7 @@ details.more .inner{padding-bottom:14px}
 .kform{display:flex;flex-direction:column;gap:10px}.kform label{font:600 11px var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}.kform textarea{width:100%;border:1px solid var(--line);background:var(--bg2);border-radius:9px;padding:8px 10px;font:14px/1.5 var(--body);color:var(--ink);resize:vertical}.kform .row2{display:flex;gap:8px;justify-content:flex-end}
 .know .gl{display:flex;align-items:center}
 .years{display:flex;flex-wrap:wrap;gap:6px}
+.fldlink{font-size:13px;color:var(--accent);text-decoration:none;margin-top:4px;align-self:flex-start}
 .yr{font:500 12.5px var(--mono);border:1px solid var(--line);background:var(--bg2);border-radius:8px;padding:4px 9px;color:var(--muted)}
 .yr[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 .touchform{display:grid;grid-template-columns:auto auto 1fr auto;gap:6px;align-items:center}
@@ -408,6 +409,9 @@ details.more .inner{padding-bottom:14px}
 .cropmask{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle closest-side,transparent 84%,rgba(0,0,0,.55) 84.6%)}
 .cropmask::after{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid rgba(255,255,255,.85)}
 .cropzoom{width:100%;margin:14px 0 16px;accent-color:var(--accent)}
+.bandbox{max-width:440px;max-height:82vh;display:flex;flex-direction:column;text-align:left}.bandtop{display:flex;justify-content:space-between;align-items:center}.bandtop h3{margin:0}.bandbox>p{margin:4px 0 12px}
+.bandlist{overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:0 -4px;padding:0 4px}.bandlist .pc{width:100%}
+.bands .stat{text-align:left;cursor:pointer;font:inherit;color:inherit}.bands .stat:active{transform:scale(.98)}
 @keyframes cmfade{from{opacity:0}to{opacity:1}}
 
 /* ---------- palette, menu, toast ---------- */
@@ -439,7 +443,10 @@ details.more .inner{padding-bottom:14px}
 .pres .ico{width:30px;height:30px;border-radius:50%;display:grid;place-items:center;background:var(--surface2);color:var(--accent)}
 .pres .ico svg{width:16px;height:16px}
 .menu{position:fixed;z-index:70;left:0;right:0;bottom:0;background:var(--surface);border-top:1px solid var(--line2);border-radius:20px 20px 0 0;box-shadow:var(--shadow);padding-top:10px;padding-bottom:max(16px,env(safe-area-inset-bottom,0px));padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
-.menu .grab{width:40px;height:4px;border-radius:2px;background:var(--line2);margin:0 auto 10px}
+.menu .grab{width:40px;height:5px;border-radius:3px;background:var(--line2);margin:0 auto 12px}
+.menu{touch-action:pan-x;transition:transform .22s ease}.menu.dragging{transition:none}
+.menu:not([hidden]){animation:menuup .22s ease-out}@keyframes menuup{from{transform:translateY(100%)}to{transform:none}}
+.menuscrim{position:fixed;inset:0;z-index:69;background:rgba(10,8,20,.28)}
 .toast{position:fixed;z-index:90;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 86px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:999px;font-weight:600;font-size:14px;box-shadow:var(--shadow)}
 @media (min-width:861px){.toast{bottom:calc(env(safe-area-inset-bottom,0px) + 28px)}}
 @media (prefers-reduced-motion:no-preference){.card,.pc,.btn,.row{transition:background .15s,border-color .15s,transform .15s}}
@@ -605,8 +612,9 @@ details.more .inner{padding-bottom:14px}
     <div class="pres" id="palRes" role="listbox"></div>
   </div>
 </div>
+<div class="menuscrim" id="menuScrim" hidden></div>
 <div class="menu" id="menu" hidden>
-  <div class="grab"></div>
+  <div class="grab" aria-hidden="true"></div>
   <button class="nav" type="button" data-view="map"><svg><use href="#i-globe"/></svg>World map</button>
   <button class="nav" type="button" data-view="rems"><svg><use href="#i-bell"/></svg>Reminders</button><button class="nav" type="button" data-view="bdays"><svg><use href="#i-cake"/></svg>Birthdays</button>
   <button class="nav" type="button" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
@@ -641,7 +649,7 @@ const NYCW=['nyc','new york','new york city','manhattan','brooklyn','queens','br
 function region(c){if(!c)return '';const first=String(c).split('/')[0].trim();const k=first.toLowerCase().replace(/,?\s*(ny|new york)$/,'').trim();if(NYCW.includes(k))return 'New York City';if(HV.includes(k)||/hudson valley|catskill/.test(k))return 'Hudson Valley';return first}
 const FIELDS={
   basics:[['first','First name'],['last','Last name'],['nickname','Nickname'],['callsMe','Calls me']],
-  contact:[['phone','Phone'],['email','Email'],['instagram','Instagram'],['city','Lives in'],['birthday','Birthday','date'],['address','Mailing address','text','full']],
+  contact:[['phone','Phone'],['email','Email'],['instagram','Instagram'],['website','Website','url'],['city','Lives in'],['birthday','Birthday','date'],['address','Mailing address','text','full']],
   story:[['whereMet','Where we met'],['yearMet','Year met','number'],['job','Job'],['interests','Interests'],['abilities','Abilities','text','full']],
   reflect:[['admire','Things I admire','area'],['notAdmire',"Things I don't admire",'area'],['values','Values','area'],['embody','Qualities I need to embody','area'],['notes','Notes','area']],
   ritual:[['annualToken','Annual token','area']]
@@ -667,7 +675,7 @@ const isInner=p=>!!p.inner&&isActive(p);
 const circleCls=p=>isInner(p)?'inner':p.circle==='Family'?'fam':p.circle===ORBIT?'orbit':p.circle===MEM?'mem':p.circle===OUTER?'outer':'';
 function allYears(){const s=new Set([THIS_YEAR]);people.forEach(p=>(p.years||[]).forEach(y=>s.add(y)));return [...s].sort((a,b)=>b-a)}
 function latestSphereYear(){let m=0;people.forEach(p=>(p.years||[]).forEach(y=>{if(y>m)m=y}));return m||THIS_YEAR}
-function inCurrent(p){if(!isActive(p))return false;return p.circle==='Family'||(p.years||[]).includes(latestSphereYear())}
+function inCurrent(p){return isActive(p)}
 const ZOD=[['Capricorn','♑',119],['Aquarius','♒',218],['Pisces','♓',320],['Aries','♈',419],['Taurus','♉',520],['Gemini','♊',620],['Cancer','♋',722],['Leo','♌',822],['Virgo','♍',922],['Libra','♎',1022],['Scorpio','♏',1121],['Sagittarius','♐',1221],['Capricorn','♑',1231]];
 function zodiac(p){if(!p.birthday)return null;const [,m,d]=String(p.birthday).split('-').map(Number);if(!m||!d)return null;const md=m*100+d;return ZOD.find(z=>md<=z[2])}
 // ---------- human design + astrology ----------
@@ -845,7 +853,7 @@ function render(){document.body.dataset.view=view;
   renderCounts();
   const [t,s]=TITLES[view]; $('viewTitle').textContent=t;
   if(view==='home'){$('viewTitle').textContent=greeting();$('viewSub').textContent=NOW.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}
-  else if(view==='people'){$('viewSub').textContent=`${[...people.values()].filter(isActive).length} people · ${[...people.values()].filter(inCurrent).length} in your ${latestSphereYear()} sphere`}
+  else if(view==='people'){$('viewSub').textContent=`${[...people.values()].filter(isActive).length} people in your sphere`}
   else $('viewSub').textContent=s;
   if(!loaded){$('view').innerHTML=`<div class="empty">Opening your sphere…</div>`;return}
   if(view==='home') renderHome();
@@ -1183,7 +1191,7 @@ function buildStars(){
     else if(b==='long') r=.83+.06*j;
     else {const k=isFinite(d)?Math.log(1+d/20)/Math.log(1+1800/20):1;r=.32+.44*Math.min(1,k)+.02*(j-.5)}
     const o=prev.get(p.id);
-    return {p,b,r,a:(h%10000)/10000*Math.PI*2,s:(1.6+Math.log10(msgCount(p)+1)*1.35)*(b==='inner'?.72:1),va:o?o.va:1};
+    return {p,b,r,a:(h%10000)/10000*Math.PI*2,h:((((h>>>20)^(h>>>3))%1000)/1000-.5)*(b==='inner'?.1:b==='mem'||b==='outer'?.14:.26),s:(1.6+Math.log10(msgCount(p)+1)*1.35)*(b==='inner'?.72:1),va:o?o.va:1};
   });
 }
 function levelZoom(lv){if(lv===0)return 1;const vis=orbitStars.filter(s=>inLevel(s,lv));if(!vis.length)return 1;const m=Math.max(...vis.map(s=>s.r));return Math.min(6.5,Math.max(1,.9/(m+.02)))}
@@ -1200,9 +1208,9 @@ function renderOrbit(){
     builtFor='orbit';
     $('view').innerHTML=`<div class="orbitwrap" id="ow"><canvas id="orbitCanvas" aria-label="Orbit map of your people"></canvas><div class="tip" id="tip" hidden></div><div class="opeek" id="opeek" hidden></div>
       <div class="ozoom" role="group" aria-label="Zoom"><div class="ozseg">${LEVELS.map((l,i)=>`<button type="button" data-olv="${i}" aria-pressed="${i===orbitLevel}">${l[0]}</button>`).join('')}</div><span class="ozcount" id="ozCount"></span></div>
-      <div class="ozbtns"><button type="button" id="ozIn" aria-label="Zoom in">+</button><button type="button" id="ozOut" aria-label="Zoom out">−</button></div>
-      <div class="ohint" id="ohint">${matchMedia('(hover: none)').matches?'Tap a star to see who it is. Hold to send energy':'Hold a star to send them energy'}</div></div>
-      <div class="legend"><span><i style="background:var(--inner)"></i>Inner sphere</span><span><i style="background:var(--accent)"></i>Talked in the last 2 months</span><span><i style="background:var(--ink)"></i>This year</span><span><i style="background:var(--muted)"></i>Longer ago</span><span><i style="background:var(--fam)"></i>Family</span><span><i style="background:var(--orbit)"></i>Long Orbit</span><span><i style="background:var(--outer)"></i>Outer Orbit</span><span><i style="background:var(--mem)"></i>In memory</span><span>Bigger star = more messages</span></div>
+      <div class="ozbtns"><button type="button" id="ozIn" aria-label="Zoom in">+</button><button type="button" id="ozOut" aria-label="Zoom out">−</button><button type="button" id="ozReset" aria-label="Reset the view" title="Reset the view">⟲</button></div>
+      <div class="ohint" id="ohint">${matchMedia('(hover: none)').matches?'Drag to spin and tilt. Tap a star to see who it is, hold to send energy':'Drag to spin and tilt. Hold a star to send them energy'}</div></div>
+      <div class="legend"><span><i style="background:var(--inner)"></i>Inner sphere</span><span><i style="background:var(--accent)"></i>Talked in the last 2 months</span><span><i style="background:var(--ink)"></i>This year</span><span><i style="background:var(--muted)"></i>Longer ago</span><span><i style="background:var(--fam)"></i>Family</span><span><i style="background:var(--outer)"></i>Outer Orbit</span><span><i style="background:var(--mem)"></i>In memory</span><span>Bigger star = more messages</span></div>
       <div class="bands" id="bands"></div>`;
     const cv=$('orbitCanvas'), at=e=>{const r=cv.getBoundingClientRect();return [e.clientX-r.left,e.clientY-r.top]};
     orbitT0=performance.now(); orbitStars.forEach(s=>s.va=1);
@@ -1210,31 +1218,43 @@ function renderOrbit(){
       if(pinch&&pinch.pts.has(e.pointerId)){pinch.pts.set(e.pointerId,at(e));if(pinch.pts.size===2){const [a,b]=[...pinch.pts.values()],d=Math.hypot(a[0]-b[0],a[1]-b[1]);if(!pinch.d0)pinch.d0=d;else if(d/pinch.d0>1.35){setLevel(orbitLevel+1);pinch.d0=d}else if(d/pinch.d0<.74){setLevel(orbitLevel-1);pinch.d0=d}}}
       const [mx,my]=at(e);
       if(energy){if(!energy.on&&Math.hypot(mx-energy.x0,my-energy.y0)>14)endEnergy(false);return}
+      if(odrag&&odrag.id===e.pointerId&&!(pinch&&pinch.pts.size>1)){const dx=mx-odrag.x,dy=my-odrag.y;odrag.x=mx;odrag.y=my;odrag.d+=Math.abs(dx)+Math.abs(dy);if(odrag.d>6){suppressClick=true;$('tip').hidden=true}oYaw+=dx*.009;oVY=dx*.009;oTilt=Math.max(0,Math.min(1.45,oTilt+dy*.006));kick();return}
       if(e.pointerType==='mouse')pickStar(mx,my)});
     cv.addEventListener('pointerdown',e=>{
       if(!pinch)pinch={pts:new Map(),d0:0};pinch.pts.set(e.pointerId,at(e));
       if(pinch.pts.size>1){if(energy)endEnergy(false);return}
       const [mx,my]=at(e);lastPtr=e.pointerType;const s=pickStar(mx,my,e.pointerType==='mouse'?14:22);suppressClick=false;
-      if(s){orbitHover=null;$('tip').hidden=true;energy={s,t0:performance.now(),x0:mx,y0:my,on:false,last:0,id:e.pointerId};try{cv.setPointerCapture(e.pointerId)}catch(_){}kick()}});
-    const up=e=>{if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy&&energy.id===e.pointerId){const en=energy;endEnergy(true);if(!en.on&&e.pointerType!=='mouse'){if(peekId===en.s.p.id)openPerson(en.s.p.id);else peek(en.s)}}};
-    cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',e=>{if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy)endEnergy(false)});
+      if(s){orbitHover=null;$('tip').hidden=true;energy={s,t0:performance.now(),x0:mx,y0:my,on:false,last:0,id:e.pointerId};try{cv.setPointerCapture(e.pointerId)}catch(_){}kick()}
+      else{odrag={id:e.pointerId,x:mx,y:my,d:0};oVY=0;try{cv.setPointerCapture(e.pointerId)}catch(_){}}});
+    const up=e=>{if(odrag&&odrag.id===e.pointerId){odrag=null;kick()}if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy&&energy.id===e.pointerId){const en=energy;endEnergy(true);if(!en.on&&e.pointerType!=='mouse'){if(peekId===en.s.p.id)openPerson(en.s.p.id);else peek(en.s)}}};
+    cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',e=>{odrag=null;if(pinch){pinch.pts.delete(e.pointerId);if(!pinch.pts.size)pinch=null}if(energy)endEnergy(false)});
     cv.addEventListener('touchstart',e=>{if(e.touches.length>1){e.preventDefault();return}const t=e.touches[0];const [mx,my]=at(t);if(hitStar(mx,my,22))e.preventDefault()},{passive:false});
     cv.addEventListener('touchmove',e=>{if(energy||e.touches.length>1)e.preventDefault()},{passive:false});
     cv.addEventListener('contextmenu',e=>e.preventDefault());
     cv.addEventListener('mouseleave',()=>{orbitHover=null;$('tip').hidden=true});
     cv.addEventListener('wheel',e=>{if(!e.ctrlKey)return;e.preventDefault();const n=performance.now();if(n-(cv._wz||0)<450)return;cv._wz=n;setLevel(orbitLevel+(e.deltaY<0?1:-1))},{passive:false});
     cv.addEventListener('click',e=>{if(suppressClick){suppressClick=false;return}const [mx,my]=at(e);const s=hitStar(mx,my,lastPtr==='mouse'?18:24);if(lastPtr==='mouse'){if(s)openPerson(s.p.id);return}if(!s){peek(null);return}if(peekId===s.p.id){openPerson(s.p.id);return}peek(s)});
-    $('ow').addEventListener('click',e=>{const b=e.target.closest('[data-olv]');if(b){setLevel(+b.dataset.olv);return}if(e.target.id==='ozIn')setLevel(orbitLevel+1);if(e.target.id==='ozOut')setLevel(orbitLevel-1)});
+    $('ow').addEventListener('click',e=>{const b=e.target.closest('[data-olv]');if(b){setLevel(+b.dataset.olv);return}if(e.target.id==='ozIn')setLevel(orbitLevel+1);if(e.target.id==='ozOut')setLevel(orbitLevel-1);if(e.target.id==='ozReset'){const y0=oYaw,t0=oTilt,st=performance.now();oVY=0;const step=()=>{const k=Math.min(1,(performance.now()-st)/450),e2=1-Math.pow(1-k,3);oYaw=y0+(Math.round(y0/(Math.PI*2))*Math.PI*2-y0)*e2;oTilt=t0+(.4-t0)*e2;kick();if(k<1)requestAnimationFrame(step)};step()}});
     buildStars(); zCur=zTarget=levelZoom(orbitLevel);
   }
   buildStars();
   const counts={inner:0,near:0,year:0,far:0,fam:0,long:0,outer:0,mem:0}; orbitStars.forEach(s=>counts[s.b]++);
-  const lab={inner:['Inner sphere','closest to you'],near:['Close right now','last 2 months'],year:['This year','2–12 months'],far:['Further out','over a year'],fam:['Family','inner ring'],long:['Long Orbit','wider path'],outer:['Outer Orbit','work and home help'],mem:['In memory','outer edge']};
-  $('bands').innerHTML=Object.keys(lab).map(k=>`<div class="stat"><b>${counts[k]}</b><span>${lab[k][0]} · ${lab[k][1]}</span></div>`).join('');
+  $('bands').innerHTML=Object.keys(BAND_LAB).filter(k=>k!=='long'||counts.long).map(k=>`<button type="button" class="stat" data-band="${k}"><b>${counts[k]}</b><span>${BAND_LAB[k][0]} · ${BAND_LAB[k][1]}</span></button>`).join('');
   setLevel(orbitLevel,true); stopOrbit(); drawOrbit();
 }
+const BAND_LAB={inner:['Inner sphere','closest to you'],near:['Close right now','last 2 months'],year:['This year','2–12 months'],far:['Further out','over a year'],fam:['Family','inner ring'],long:['Long Orbit','wider path'],outer:['Outer Orbit','work, home help and old friends'],mem:['In memory','outer edge']};
+function goPeople(filter){setView('people');setTimeout(()=>{const f=$('fCircle');if(f){f.value=filter;renderPList()}},0)}
+function openBand(k){if(k==='outer'||k==='mem'){setView(k);return}if(k==='inner'){goPeople('__inner');return}if(k==='fam'){goPeople('Family');return}
+  const list=orbitStars.filter(s=>s.b===k).map(s=>s.p).sort((a,b)=>(lastSeen(b)||'').localeCompare(lastSeen(a)||''));
+  const m=document.createElement('div');m.className='cmodal';m.id='bandModal';
+  m.innerHTML=`<div class="cmodal-box bandbox" role="dialog" aria-modal="true" aria-labelledby="bandT"><div class="bandtop"><h3 id="bandT">${esc(BAND_LAB[k][0])}</h3><button class="ibtn" type="button" data-bandx aria-label="Close"><svg><use href="#i-x"/></svg></button></div><p>${list.length} ${list.length===1?'person':'people'} · ${esc(BAND_LAB[k][1])}</p><div class="bandlist">${list.map(p=>pcard(p,'',lastSeen(p)?'Last talked '+ago(lastSeen(p)):'No contact logged yet')).join('')||'<p class="hint">Nobody here right now.</p>'}</div></div>`;
+  m.addEventListener('click',e=>{if(e.target===m||e.target.closest('[data-bandx]')||e.target.closest('[data-id]'))setTimeout(()=>m.remove(),0)});document.body.appendChild(m)}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-band]');if(b)openBand(b.dataset.band)});
 function orbitGeom(){const cv=$('orbitCanvas'),w=cv.clientWidth,h=Math.min(Math.max(w*0.86,340),720);return {cv,w,h,cx:w/2,cy:h/2,R:Math.min(w,h)/2-18}}
-function starPos(s,t,g){const om=reduce?0:0.000012/Math.max(.25,s.r);const a=s.a+t*om;const rr=s.r*zCur*g.R;return [g.cx+Math.cos(a)*rr,g.cy+Math.sin(a)*rr*.92]}
+// 3D: stars sit on a tilted disc with a little height; drag spins (yaw) and tilts it, with perspective.
+let oYaw=0,oTilt=.4,oVY=0,odrag=null;
+function proj(X,Z,Y,g){const ct=Math.cos(oTilt),st=Math.sin(oTilt);const sy=Z*ct-Y*st,dep=Z*st+Y*ct;const k=Math.max(.5,Math.min(1.9,1/(1-Math.max(-2.5*g.R,Math.min(1.6*g.R,dep))/(g.R*3.4))));return [g.cx+X*k,g.cy+sy*k,k,dep]}
+function starPos(s,t,g){const om=reduce?0:0.000012/Math.max(.25,s.r);const a=s.a+t*om+oYaw;const rr=s.r*zCur*g.R;return proj(Math.cos(a)*rr,Math.sin(a)*rr,(s.h||0)*zCur*g.R,g)}
 function starSize(s){return s.s*(1+Math.min(.6,(zCur-1)*.12))}
 function spark4(x,cx,cy,r,rot){x.save();x.translate(cx,cy);x.rotate(rot);x.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,rad=i%2?r*.28:r;x.lineTo(Math.cos(a)*rad,Math.sin(a)*rad)}x.closePath();x.fill();x.restore()}
 function drawOrbit(){
@@ -1246,12 +1266,13 @@ function drawOrbit(){
   const C=colors(), t=now-orbitT0;
   let moving=false;
   const dz=zTarget-zCur; if(Math.abs(dz)>.002){zCur+=reduce?dz:dz*.12;moving=true}else zCur=zTarget;
+  if(!odrag&&Math.abs(oVY)>.0003){oYaw+=oVY;oVY*=.93;moving=true}
   orbitStars.forEach(s=>{const tv=inLevel(s,orbitLevel)?1:0;const d=tv-s.va;if(Math.abs(d)>.01){s.va+=reduce?d:d*.14;moving=true}else s.va=tv});
   // guide rings
   [[.15,'Inner',C.inner],[.26,'Family'],[.36,'Now'],[.55,'This year'],[.76,'Years'],[.955,'Outer Orbit',C.outer]].forEach(([r,l,col],i)=>{
     const rr=r*zCur; if(rr>1.04)return; const fade=Math.max(0,Math.min(1,(1.04-rr)/.1));
-    x.beginPath();x.ellipse(g.cx,g.cy,rr*g.R,rr*g.R*.92,0,0,Math.PI*2);x.strokeStyle=col||C.line;x.globalAlpha=(col?.5:1)*fade;x.setLineDash(col?[3,5]:[2,6]);x.lineWidth=1;x.stroke();x.setLineDash([]);
-    const la=-Math.PI/2+(i-3)*.5;x.fillStyle=C.faint;x.font='500 10px "JetBrains Mono", monospace';x.textAlign='center';x.fillText(l.toUpperCase(),g.cx+Math.cos(la)*rr*g.R,g.cy+Math.sin(la)*rr*g.R*.92-5);x.globalAlpha=1;
+    x.beginPath();for(let q=0;q<=72;q++){const aa=q/72*Math.PI*2,[qx,qy]=proj(Math.cos(aa)*rr*g.R,Math.sin(aa)*rr*g.R,0,g);q?x.lineTo(qx,qy):x.moveTo(qx,qy)}x.strokeStyle=col||C.line;x.globalAlpha=(col?.5:1)*fade;x.setLineDash(col?[3,5]:[2,6]);x.lineWidth=1;x.stroke();x.setLineDash([]);
+    const la=-Math.PI/2+(i-3)*.5;x.fillStyle=C.faint;x.font='500 10px "JetBrains Mono", monospace';x.textAlign='center';{const [lx,ly]=proj(Math.cos(la)*rr*g.R,Math.sin(la)*rr*g.R,0,g);x.fillText(l.toUpperCase(),lx,ly-5)}x.globalAlpha=1;
   });
   // you
   const yr=g.R*.16*Math.min(2.2,Math.sqrt(zCur));
@@ -1263,8 +1284,8 @@ function drawOrbit(){
   if(orbitHover&&!energy){const [hx,hy]=pos.get(orbitHover.p.id)||[];(orbitHover.p.links||[]).forEach(id=>{const q=pos.get(id);const qs=orbitStars.find(o=>o.p.id===id);if(!q||!qs||qs.va<.5)return;x.beginPath();x.moveTo(hx,hy);x.lineTo(q[0],q[1]);x.strokeStyle=C.accent;x.globalAlpha=.5;x.stroke();x.globalAlpha=1});
     x.beginPath();x.moveTo(g.cx,g.cy);x.lineTo(hx,hy);x.strokeStyle=C.line2;x.setLineDash([2,4]);x.stroke();x.setLineDash([])}
   const showAll=zCur>1.35;
-  orbitStars.forEach(s=>{if(s.va<.02)return;const [px,py]=pos.get(s.p.id);if(px<-30||py<-30||px>g.w+30||py>g.h+30)return;const col=(['near','year','far'].includes(s.b)&&customColor(s.p.circle))||C[s.b];const hov=orbitHover&&orbitHover.p.id===s.p.id;const sz=starSize(s);
-    x.globalAlpha=(s.b==='mem'?.6:s.b==='outer'?.55:s.b==='far'?.75:1)*s.va;
+  [...orbitStars].sort((a,b)=>(pos.get(a.p.id)[3])-(pos.get(b.p.id)[3])).forEach(s=>{if(s.va<.02)return;const [px,py,pk]=pos.get(s.p.id);if(px<-30||py<-30||px>g.w+30||py>g.h+30)return;const col=(['near','year','far'].includes(s.b)&&customColor(s.p.circle))||C[s.b];const hov=orbitHover&&orbitHover.p.id===s.p.id;const sz=starSize(s)*pk;
+    x.globalAlpha=(s.b==='mem'?.6:s.b==='outer'?.55:s.b==='far'?.75:1)*s.va*Math.min(1,.55+.45*pk);
     if(s.b==='near'||s.b==='inner'||hov){x.shadowColor=col;x.shadowBlur=hov?16:8}
     x.fillStyle=col;x.beginPath();x.arc(px,py,hov?sz+2.5:sz,0,Math.PI*2);x.fill();x.shadowBlur=0;
     const lab=showAll?s.va>.6:((s.b==='inner'?g.R>260:s.s>4.6)&&s.b!=='mem'&&s.b!=='outer');
@@ -1340,7 +1361,7 @@ function renderPeople(){
       <div class="controls">
         <label class="search"><svg><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names, jobs, cities, anything you know" autocomplete="off"></label>
         ${view==='people'?`<select class="f" id="fCircle" aria-label="Circle"><option value="">Everyone</option><option value="__active">Friends + family</option><option value="__inner">Inner sphere</option><option>Friend</option><option>Family</option>${circleOpts()}<option>Outer Orbit</option><option>In memory</option></select>`:view==='outer'?`<select class="f" id="fCircle" aria-label="Role"><option value="">Every role</option>${ROLES.map(r=>`<option>${r}</option>`).join('')}</select>`:'<select class="f" id="fCircle" hidden aria-hidden="true"><option value=""></option></select>'}
-        <select class="f" id="fYear" aria-label="Sphere year"></select>
+        <select class="f" id="fYear" aria-label="Sphere year" hidden></select>
         <select class="f" id="fMet" aria-label="Where we met"></select>
         <select class="f" id="fCity" aria-label="City"></select>
         <select class="f" id="fSort" aria-label="Sort"><option value="name">A to Z</option><option value="recent">Recently in touch</option><option value="touch">Longest since contact</option><option value="msgs">Most messages</option><option value="met">Year met</option></select>
@@ -1384,7 +1405,7 @@ function renderReach(){
   $('view').innerHTML=`${pausedUntil()?`<div class="pausebar"><span>⏸ Orbit is paused until <b>${esc(new Date(pausedUntil()+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}</b>. Drift alerts and reach-out nudges are off.</span><button type="button" class="btn small" data-act="unpause">Resume</button></div>`:''}
     ${dl.length?`<div class="sh" style="margin-top:0"><h3>Drift alerts</h3><span class="pill">${dl.length}</span></div><p class="hint">Six months or more since you were in touch. Newest drifts first.</p><div class="grid3">${dl.map(driftCard).join('')}</div>`:''}
     <div class="sh" ${dl.length?'':'style="margin-top:0"'}><h3>This week's six</h3></div>
-    <p class="hint">A rotating handful from your ${y} sphere. Log a touch on their card after you reach out and they drop off.</p>
+    <p class="hint">A rotating handful from your sphere. Log a touch on their card after you reach out and they drop off.</p>
     <div class="grid3">${pick.length?pick.map(p=>pcard(p,fu(p),lastSeen(p)?'Last contact '+ago(lastSeen(p)):'No contact yet')).join(''):'<div class="empty">Everyone in your sphere heard from you in the last 3 months.</div>'}</div>
     <div class="sh"><h3>Birthdays in the next 60 days</h3></div>
     ${bd.length?`<div class="rail">${bd.map(({p,b,kid})=>pcard(p,kid?kidLine(kid,b):'',(b.days===0?'Today':b.days===1?'Tomorrow':'In '+b.days+' days')+' · '+b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),'bday')).join('')}</div>`:'<p class="hint">None coming up.</p>'}
@@ -1408,8 +1429,9 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDelAsk()});
 function openPerson(id){selected=id;confirmDel=false;mergeFrom=null;kEdit=null;lastRenderedId=null;renderDetail();$('detail').scrollTop=0}
 window.orbitOpenPerson=id=>{if(people.has(id))openPerson(id)};
 function closePerson(){if(draft.ctl)draft.ctl.abort();selected=null;renderDetail()}
-function fieldHTML([k,label,type,wide],p){const v=p[k]??'';const ctrl=type==='area'?`<textarea id="f-${k}" data-k="${k}" rows="2">${esc(v)}</textarea>`:`<input id="f-${k}" data-k="${k}" type="${type==='date'?'date':type==='number'?'number':'text'}" value="${esc(v)}">`;return `<div class="fld ${wide||type==='area'?'full':''}"><label for="f-${k}">${label}</label>${ctrl}</div>`}
-let kEdit=null, actOpen=false;
+function fieldHTML([k,label,type,wide],p){const v=p[k]??'';const ctrl=type==='area'?`<textarea id="f-${k}" data-k="${k}" rows="2">${esc(v)}</textarea>`:`<input id="f-${k}" data-k="${k}" type="${type==='date'?'date':type==='number'?'number':type==='url'?'url':'text'}"${type==='url'?' autocapitalize="off" placeholder="example.com"':''} value="${esc(v)}">${type==='url'&&v?`<a class="fldlink" href="${esc(/^https?:/i.test(v)?v:'https://'+v)}" target="_blank" rel="noopener">Open ↗</a>`:''}`;return `<div class="fld ${wide||type==='area'?'full':''}"><label for="f-${k}">${label}</label>${ctrl}</div>`}
+let kEdit=null, actOpen=false, knowOpen=false;
+function knowWrap(p){const h=profileHTML(p).replace('<p class="gl">What I know','<p class="gl">');return `<details class="more" id="knowBox"${kEdit===p.id||knowOpen?' open':''}><summary>What I know</summary><div class="inner">${h}</div></details>`}
 function fuBlock(p,pr){const f=pr.followUps||[];return `<p class="gl" style="margin:14px 0 8px">Bring up next time</p>${f.length?`<ul class="kl fu">${f.map((x,i)=>`<li><span>${esc(x)}</span><button class="fux" type="button" data-fudel="${i}" aria-label="Remove">×</button></li>`).join('')}</ul>`:''}<div class="fuadd"><input id="fuNew" placeholder="Add something to bring up" aria-label="Add something to bring up next time" autocomplete="off"><button class="btn small" type="button" data-act="fuadd">Add</button></div>`}
 function setFollowUps(id,list){const old=profiles.get(id)||{};const np={...old,followUps:list};if(!old.summary&&!old.generatedAt&&!old.editedAt)np.summary=old.summary||'';profiles.set(id,np);lastRenderedId=null;render();if(db)db.doc('profiles/'+id).set(np).catch(()=>status('Couldn’t save just now. Try again in a moment.'))}
 function profileHTML(p){const pr=profiles.get(p.id)||{};const li=a=>(a||[]).map(x=>`<li>${esc(x)}</li>`).join('');
@@ -1476,7 +1498,6 @@ function renderDetail(){
       ${quickHTML(p)}</div>
     <div class="dbody">
       ${draft.open&&draft.id===p.id&&sample?drafterHTML(p):''}
-      ${profileHTML(p)}
       <details class="more" id="actBox"${actOpen?' open':''}><summary>Touches and messages${(p.touches||[]).length||msgCount(p)?`<span class="actn">${[(p.touches||[]).length?(p.touches||[]).length+' touches':'',msgCount(p)?msgCount(p).toLocaleString()+' messages':''].filter(Boolean).join(' · ')}</span>`:''}</summary><div class="inner">
       <div class="group"><p class="gl">Log a touch</p>
         <form class="touchform" id="touchForm"><input type="date" id="tDate" value="${TODAY}" aria-label="Date"><select id="tKind" aria-label="How"><option>Text</option><option>Call</option><option>Hang</option><option>Email</option><option>Gift</option></select><input id="tNote" placeholder="What did you talk about?" aria-label="Note"><button class="btn small primary" type="submit">Log</button></form>
@@ -1484,12 +1505,12 @@ function renderDetail(){
       ${textsHTML(p.textStats,'iMessage','texts')}${textsHTML(p.whatsappStats,'WhatsApp','messages')}${textsHTML(p.instagramStats,'Instagram DMs','messages')}
       </div></details>
       ${linksHTML(p)}
-      <div class="group"><p class="gl">In my sphere</p>${isActive(p)?`<p style="margin:0 0 12px"><button class="tgl" type="button" data-act="inner" aria-pressed="${!!p.inner}"><i></i>${p.inner?'In your inner sphere':'Add to inner sphere'}</button></p>`:''}<div class="years">${yrs.map(y=>`<button class="yr" type="button" data-yr="${y}" aria-pressed="${(p.years||[]).includes(y)}">${y}</button>`).join('')}</div>
+      <div class="group"><p class="gl">In my sphere</p>${isActive(p)?`<p style="margin:0 0 12px"><button class="tgl" type="button" data-act="inner" aria-pressed="${!!p.inner}"><i></i>${p.inner?'In your inner sphere':'Add to inner sphere'}</button></p>`:''}
         <div class="fields" style="margin-top:12px"><div class="fld"><label for="f-circle">Circle</label><select id="f-circle" data-k="circle">${[...new Set([...circleList(),p.circle||'Friend'])].map(c=>`<option${(p.circle||'Friend')===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div>
         ${p.circle===MEM?`<div class="fld"><label for="f-passed">Passed away</label><input id="f-passed" data-k="passed" type="date" value="${esc(p.passed||'')}"></div><div class="fld full"><label for="f-remember">How I remember them</label><textarea id="f-remember" data-k="remember" rows="2">${esc(p.remember||'')}</textarea></div>`:''}
         ${p.circle===OUTER?`<div class="fld"><label for="f-role">Role</label><select id="f-role" data-k="role"><option value="">Pick one</option>${ROLES.map(r=>`<option${p.role===r?' selected':''}>${r}</option>`).join('')}</select></div>`:''}
         ${p.drift?`<div class="fld full"><label for="f-drift">What pulled us apart, or what might pull us back</label><textarea id="f-drift" data-k="drift" rows="2">${esc(p.drift||'')}</textarea></div>`:''}</div></div>
-      ${grp('Who they are',FIELDS.basics,true)}${grp('Contact',FIELDS.contact)}${grp('Our story',FIELDS.story)}${grp('Reflections',FIELDS.reflect)}${grp('Ritual',FIELDS.ritual)}${remindHTML(p)}${kidsHTML(p)}${hdHTML(p)}
+      ${grp('Who they are',FIELDS.basics,true)}${grp('Contact',FIELDS.contact)}${grp('Our story',FIELDS.story)}${knowWrap(p)}${grp('Reflections',FIELDS.reflect)}${grp('Ritual',FIELDS.ritual)}${remindHTML(p)}${kidsHTML(p)}${hdHTML(p)}
       <details class="more"${mergeFrom?' open':''}><summary>Merge a duplicate</summary><div class="inner"><p class="hint" style="margin:0">Got two cards for the same person? Pick the other card and it gets folded into this one: details fill in where this card is blank, years, touches, connections and message stats combine, and the other card is removed.</p>
         <div class="mergebox"><select id="mergeSel" aria-label="Card to merge into this one"><option value="">Pick the duplicate…</option>${[...people.values()].filter(o=>o.id!==p.id).sort((a,b)=>simScore(p,b)-simScore(p,a)||fullName(a).localeCompare(fullName(b))).map(o=>`<option value="${esc(o.id)}"${mergeFrom===o.id?' selected':''}>${esc(fullName(o))}${o.phone?' · '+esc(o.phone):''}</option>`).join('')}</select>
         ${mergeFrom&&people.has(mergeFrom)?`<button class="btn small primary" type="button" id="mergeYes">Merge ${esc(people.get(mergeFrom).first||'')} into ${esc(p.first||'this card')}</button><button class="btn small" type="button" id="mergeNo">Cancel</button>`:''}</div></div></details>
@@ -1851,7 +1872,20 @@ document.addEventListener('click',async e=>{
   if(t.id==='delYes'){closeDelAsk();const id=selected;people.delete(id);selected=null;confirmDel=false;render();toast('Removed');if(db)db.doc('contacts/'+id).delete().catch(()=>status('Couldn’t remove just now.'));return}
   if(!$('menu').hidden&&!t.closest('#menu')&&!t.closest('#tabMore'))$('menu').hidden=true;
 });
-document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='actBox')actOpen=e.target.open},true);
+
+// More sheet: dim behind it, and swipe it down to close
+(function(){const m=document.getElementById('menu'),sc=document.getElementById('menuScrim');if(!m)return;
+  new MutationObserver(()=>{sc.hidden=m.hidden;if(m.hidden)m.style.transform=''}).observe(m,{attributes:true,attributeFilter:['hidden']});
+  sc.addEventListener('click',()=>{m.hidden=true});
+  let y0=null,dy=0,t0=0;
+  m.addEventListener('touchstart',e=>{if(e.touches.length!==1)return;y0=e.touches[0].clientY;dy=0;t0=performance.now();m.classList.add('dragging')},{passive:true});
+  m.addEventListener('touchmove',e=>{if(y0===null)return;dy=Math.max(0,e.touches[0].clientY-y0);if(dy>0){e.preventDefault();m.style.transform=`translateY(${dy}px)`}},{passive:false});
+  const end=()=>{if(y0===null)return;m.classList.remove('dragging');const v=dy/Math.max(1,performance.now()-t0);
+    if(dy>90||(dy>30&&v>.5)){m.style.transform='translateY(100%)';setTimeout(()=>{m.hidden=true;m.style.transform=''},200)}else m.style.transform='';
+    if(dy>8){const kill=ev=>{ev.stopPropagation();ev.preventDefault()};m.addEventListener('click',kill,{capture:true,once:true});setTimeout(()=>m.removeEventListener('click',kill,{capture:true}),350)}
+    y0=null};
+  m.addEventListener('touchend',end);m.addEventListener('touchcancel',end)})();
+document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='actBox')actOpen=e.target.open;if(e.target&&e.target.id==='knowBox')knowOpen=e.target.open},true);
 document.addEventListener('input',e=>{if(e.target.id==='dAngle')draft.angle=e.target.value;else if(e.target.id==='dOut'&&!draft.busy)draft.text=e.target.value});
 document.addEventListener('change',e=>{
   if(e.target.id==='photoIn'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f&&selected)setPhoto(selected,f);return}

@@ -3,3 +3,6 @@
 /* iOS zooms the whole page when you tap a text box with text smaller than 16px, and doesn't zoom back. Keep inputs at 16px on phones. */
 html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 @media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{font-size:16px!important}}
+.invbar{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;margin-top:10px;min-height:48px;border-radius:14px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);font:600 15px var(--body);cursor:pointer}
+.invbar svg{width:18px;height:18px}
+.invbar:active{filter:brightness(.97)}
