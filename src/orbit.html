@@ -886,7 +886,7 @@ function renderHome(){
   const dl=SET.remind.homeDrift?driftList():[], nd=dl.filter(isNewDrift).length;
   const rl=reachList();
   $('view').innerHTML=`<div id="signalRow"></div>${pausedUntil()?`<div class="pausebar"><span>⏸ Orbit is paused until <b>${esc(new Date(pausedUntil()+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}</b>. Drift alerts and reach-out nudges are off.</span><button type="button" class="btn small" data-act="unpause">Resume</button></div>`:''}
-    <section class="hero"><div><h2>${cur.length} people in your ${y} sphere</h2>
+    <section class="hero"><div><h2>Your ${y} sphere: ${cur.length} ${cur.length===1?'person':'people'}</h2>
       <p>${reached} of them heard from you this year. ${rl.length?`${rl.length} could use a hello.`:'Everyone has heard from you lately.'} ${bd.length?`${bd.length} birthday${bd.length>1?'s':''} in the next two months.`:''}</p></div>
       <canvas id="miniOrbit" width="150" height="150" aria-hidden="true"></canvas></section>
     <div class="stats">
@@ -896,7 +896,7 @@ function renderHome(){
       <button class="stat" type="button" data-view="orbit"><b>${all.filter(isInner).length}</b><span>in your inner sphere</span></button>
     </div>
     ${dl.length?`<div class="sh"><h3>Drift alerts</h3>${nd?`<span class="pill new">${nd} new</span>`:''}${dl.length>6?`<button class="more" type="button" data-view="reach">See all ${dl.length}</button>`:''}</div><p class="hint">People in your sphere you haven't been in touch with for six months or more. Snooze anyone you're fine leaving quiet.</p><div class="grid3">${dl.slice(0,6).map(driftCard).join('')}</div>`:''}
-    ${fuPick.length?`<div class="sh"><h3>Bring up next time</h3></div><div class="grid3">${fuPick.map(x=>`<div class="fuwrap">${pcard(x.p,x.f,lastSeen(x.p)?'Last talked '+ago(lastSeen(x.p)):'')}<button class="fux" type="button" data-fuhome="${esc(x.p.id)}" data-fui="${x.i}" aria-label="Done with this">×</button></div>`).join('')}</div>`:''}
+    ${rl.length?`<div class="sh"><h3>Not reached in ${Math.round(REACH_DAYS/30)}+ months</h3><span class="pill">${rl.length}</span>${rl.length>12?`<button class="more" type="button" data-view="reach">See all</button>`:''}</div><div class="rail">${rl.slice(0,12).map(p=>pcard(p,'',lastSeen(p)?'Last talked '+ago(lastSeen(p)):'No contact logged yet')).join('')}</div>`:''}
     <div class="sh"><h3>Birthdays coming up</h3></div>
     ${bd.length?`<div class="rail">${bd.map(({p,b,kid})=>pcard(p,kid?kidLine(kid,b):'',(b.days===0?'Today 🎂':b.days===1?'Tomorrow':'In '+b.days+' days')+' · '+b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),'bday')).join('')}</div>`:`<p class="hint">None in the next 60 days. ${all.filter(p=>p.birthday).length} people have a birthday saved; add more on their cards as you learn them.</p>`}
     <div class="sh"><h3>Recently in touch</h3><button class="more" type="button" data-view="orbit">See the map</button></div>
