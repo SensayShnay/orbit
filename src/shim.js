@@ -11,6 +11,7 @@ window.ORBIT_BLOB=id=>BLOB_BASE()+id+'.jpg';
 const whenDom=f=>document.readyState==='loading'?document.addEventListener('DOMContentLoaded',f):f();
 async function afterLogin(){
   const OB=window.OrbitOnboard;
+  try{const code=localStorage.getItem('orbit-invite');if(code){await sb.rpc('redeem_invite',{p_code:code});localStorage.removeItem('orbit-invite')}}catch(_){}
   try{if(OB&&await OB.needs(sb,uid))await new Promise(r=>whenDom(()=>OB.run(sb,uid).then(r)))}catch(e){console.error(e)}
   if(OB)OB.close();readyRes()}
 sb.auth.onAuthStateChange((ev,session)=>{

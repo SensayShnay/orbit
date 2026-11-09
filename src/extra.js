@@ -17,3 +17,21 @@ document.addEventListener('click',async e=>{
       t.disabled=true;for(let i=0;i<rows.length;i+=200){t.textContent=`Restoring ${Math.min(i+200,rows.length)} of ${rows.length}…`;const {error}=await sb.from('docs').upsert(rows.slice(i,i+200));if(error){alert('Restore stopped: '+error.message);t.disabled=false;t.textContent='Restore from backup';return}}
       for(let i=0;i<ph.length;i++){const [id,b64]=ph[i];t.textContent=`Photo ${i+1} of ${ph.length}…`;const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));await sb.storage.from('photos').upload(`${user.id}/${id}.jpg`,new Blob([bin],{type:'image/jpeg'}),{contentType:'image/jpeg',upsert:true})}
       location.reload()};inp.click()}});
+
+// ---------- invites (trackable: each person has a code; joins are counted in Supabase) ----------
+let myInvite=null;
+async function getInvite(){if(myInvite)return myInvite;const {data,error}=await window.orbitSB.rpc('my_invite');if(error)throw error;myInvite=data;return data}
+function inviteText(code,name){const url=(window.ORBIT_CONFIG||{}).inviteUrl;
+  return `${name?`Hey ${name}! `:''}I’ve been using Orbit to stay close to the people who matter, and I think you’d like it.${url?` Get it here: ${url}`:''} Use my invite code ${code} when you sign up.`}
+async function shareInvite(name,phone){let inv;try{inv=await getInvite()}catch(e){alert('Couldn’t get your invite code just now.');return}
+  const text=inviteText(inv.code,name),C=window.Capacitor,P=C&&C.Plugins;
+  if(phone){location.href=`sms:${phone}&body=${encodeURIComponent(text)}`;return true}
+  try{if(C&&C.isNativePlatform&&C.isNativePlatform()&&P.Share){await P.Share.share({title:'Join me on Orbit',text,dialogTitle:'Invite a friend'});return true}
+    if(navigator.share){await navigator.share({title:'Join me on Orbit',text});return true}}catch(e){return false}
+  try{await navigator.clipboard.writeText(text);alert('Invite copied. Paste it anywhere.');return true}catch(_){prompt('Copy your invite:',text)}}
+document.addEventListener('click',async e=>{const b=e.target.closest('[data-orbit="invite"]');if(!b)return;e.preventDefault();e.stopPropagation();
+  const ok=await shareInvite(b.dataset.first||'',b.dataset.phone||'');
+  if(ok&&b.dataset.pid){try{await window.orbitSB.rpc('doc_update',{p_coll:'contacts',p_id:b.dataset.pid,p_patch:{invitedAt:new Date().toISOString().slice(0,10)}})}catch(_){}}},true);
+// fill the Invite card in Settings whenever it appears
+new MutationObserver(()=>{const el=document.getElementById('orbitInviteInfo');if(!el||el.dataset.done)return;el.dataset.done='1';
+  getInvite().then(inv=>{el.innerHTML=`Your code <b style="font-family:var(--mono);letter-spacing:.04em">${inv.code}</b> · ${inv.joined?`${inv.joined} friend${inv.joined===1?'':'s'} joined`:'nobody yet'}`}).catch(()=>{el.textContent='Sign in to get your invite code.'})}).observe(document.body,{childList:true,subtree:true});

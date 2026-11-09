@@ -35,6 +35,7 @@ function authForm(mode){const up=mode==='create';screen(`${up?head(2,'welcome'):
  <form class="onb-form" id="onbAuth" autocomplete="on">
   <label>Email<input name="email" type="email" required autocomplete="username" placeholder="you@email.com" autofocus></label>
   <label>Password<input name="pw" type="password" required minlength="${up?8:6}" autocomplete="${up?'new-password':'current-password'}" placeholder="${up?'At least 8 characters':''}"></label>
+  ${up?`<label>Invite code <em>Optional</em><input name="invite" autocapitalize="characters" autocomplete="off" placeholder="From the friend who invited you" value="${esc(inviteFromLink())}"></label>`:''}
   ${up?`<label class="onb-check"><input type="checkbox" name="agree"><span>I agree to the <button type="button" class="onb-inline" data-show="terms">Terms</button> and <button type="button" class="onb-inline" data-show="privacy">Privacy Policy</button></span></label>`:''}
   <p class="onb-msg" role="status"></p>
   <button type="submit" class="onb-cta">${up?'Create account':'Sign in'}</button>
@@ -43,6 +44,7 @@ function authForm(mode){const up=mode==='create';screen(`${up?head(2,'welcome'):
  f.onsubmit=async e=>{e.preventDefault();const email=f.email.value.trim(),password=f.pw.value;
   if(up&&!f.agree.checked){msg.textContent='Please agree to the Terms and Privacy Policy.';return}
   if(up&&password.length<8){msg.textContent='Use at least 8 characters for your password.';return}
+  if(up&&f.invite.value.trim()){try{localStorage.setItem('orbit-invite',f.invite.value.trim().toUpperCase())}catch(_){}}
   const b=f.querySelector('.onb-cta');b.disabled=true;msg.textContent=up?'Creating your account…':'Signing in…';
   const r=up?await SB.auth.signUp({email,password}):await SB.auth.signInWithPassword({email,password});
   b.disabled=false;
@@ -53,6 +55,7 @@ const LEGAL={terms:['Terms','Orbit is a personal tool for keeping track of your 
  privacy:['Privacy','Your sphere is stored in your own private account and only you can see it. Orbit never reads the content of your messages. If you connect the Mac helper, it sends only who you talked with and when. When you ask for a drafted text or a personal read, the details on that person’s card are sent to Anthropic’s Claude to write it. We don’t sell or share your data. Delete your account in Settings and everything is erased.']};
 function showLegal(k){const [t,b]=LEGAL[k];const d=document.createElement('div');d.className='onb-sheet';d.innerHTML=`<div class="onb-sheet-in" role="dialog" aria-label="${t}"><h2>${t}</h2><p>${b}</p><button type="button" class="onb-cta" data-close>Close</button></div>`;d.onclick=e=>{if(e.target===d||e.target.closest('[data-close]'))d.remove()};mount().appendChild(d)}
 
+function inviteFromLink(){try{const m=location.search.match(/[?&]invite=([A-Za-z0-9-]+)/);return m?m[1].toUpperCase():(localStorage.getItem('orbit-invite')||'')}catch(_){return ''}}
 function startSignedOut(sb){SB=sb;welcome()}
 
 // ---------- first-run setup ----------
