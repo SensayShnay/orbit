@@ -7,25 +7,16 @@ let uid=null, readyRes; const ready=new Promise(r=>readyRes=r);
 const BLOB_BASE=()=>`${C.url}/storage/v1/object/public/photos/${uid}/`;
 window.ORBIT_BLOB=id=>BLOB_BASE()+id+'.jpg';
 
-// ---------- login ----------
-function loginUI(msg){let el=document.getElementById('orbitLogin');
-  if(!el){el=document.createElement('div');el.id='orbitLogin';document.body.appendChild(el)}
-  el.innerHTML=`<form class="ol-box" autocomplete="on"><svg class="ol-logo" viewBox="0 0 100 100" width="64" height="64" aria-hidden="true"><circle cx="50" cy="50" r="24" fill="none" stroke="#F6F3EC" stroke-width="11.25"/><circle cx="66.97" cy="33.03" r="10" fill="#E9B44C" stroke="#1c2240" stroke-width="5"/></svg><h1>Orbit</h1><p>Sign in to see your people.</p>
-    <input name="email" type="email" placeholder="Email" required autocomplete="username">
-    <input name="pw" type="password" placeholder="Password" required minlength="6" autocomplete="current-password">
-    <button type="submit" data-m="in">Sign in</button><button type="button" class="ol-alt" data-m="up">First time? Create your account</button>
-    <p class="ol-msg">${msg||''}</p></form>`;
-  const f=el.querySelector('form'),m=el.querySelector('.ol-msg');
-  const go=async mode=>{const email=f.email.value.trim(),password=f.pw.value;if(!email||password.length<6){m.textContent='Enter your email and a password of 6+ characters.';return}
-    m.textContent=mode==='up'?'Creating your account…':'Signing in…';
-    const r=mode==='up'?await sb.auth.signUp({email,password}):await sb.auth.signInWithPassword({email,password});
-    if(r.error){m.textContent=r.error.message;return}
-    if(mode==='up'&&!r.data.session){m.textContent='Check your email to confirm, then sign in here.';return}};
-  f.onsubmit=e=>{e.preventDefault();go('in')};el.querySelector('[data-m="up"]').onclick=()=>go('up');}
+// ---------- sign in and first-run setup (src/onboard.js) ----------
+const whenDom=f=>document.readyState==='loading'?document.addEventListener('DOMContentLoaded',f):f();
+async function afterLogin(){
+  const OB=window.OrbitOnboard;
+  try{if(OB&&await OB.needs(sb,uid))await new Promise(r=>whenDom(()=>OB.run(sb,uid).then(r)))}catch(e){console.error(e)}
+  if(OB)OB.close();readyRes()}
 sb.auth.onAuthStateChange((ev,session)=>{
-  if(session&&session.user){const first=!uid;uid=session.user.id;const el=document.getElementById('orbitLogin');if(el)el.remove();if(first)readyRes()}
+  if(session&&session.user){if(!uid){uid=session.user.id;setTimeout(afterLogin,0)}}
   else if(ev==='SIGNED_OUT'){location.reload()}
-  else if(!uid){document.readyState==='loading'?document.addEventListener('DOMContentLoaded',()=>loginUI()):loginUI()}});
+  else if(!uid){whenDom(()=>window.OrbitOnboard&&window.OrbitOnboard.startSignedOut(sb))}});
 window.orbitSignOut=()=>sb.auth.signOut();
 
 // ---------- db ----------
