@@ -16,12 +16,12 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0c0f1f">
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;-webkit-text-size-adjust:100%}[hidden]{display:none!important}
-${read('src/shim.css')}${read('src/onboard.css')}</style>
+${read('src/shim.css')}${read('src/onboard.css')}${read('src/signals.css')}</style>
 <script>${read('node_modules/@supabase/supabase-js/dist/umd/supabase.js')}</script>
 <script>${read('src/config.js')}</script>
 <script>${read('src/onboard.js')}</script>
 <script>${read('src/shim.js')}</script>
-</head><body>${app}<script>${read('src/extra.js')}</script><script>${read('src/notify.js')}</script></body></html>`;
+</head><body>${app}<script>${read('src/extra.js')}</script><script>${read('src/notify.js')}</script><script>${read('src/signals.js')}</script></body></html>`;
 fs.mkdirSync('www', { recursive: true });
 fs.writeFileSync('www/index.html', html);
 console.log('Built www/index.html', (html.length / 1e6).toFixed(2) + 'MB');

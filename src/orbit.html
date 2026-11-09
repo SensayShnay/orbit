@@ -863,7 +863,7 @@ function renderHome(){
   if(!SET.remind.homeBirthdays)bd.length=0;
   const dl=SET.remind.homeDrift?driftList():[], nd=dl.filter(isNewDrift).length;
   const rl=reachList();
-  $('view').innerHTML=`${pausedUntil()?`<div class="pausebar"><span>⏸ Orbit is paused until <b>${esc(new Date(pausedUntil()+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}</b>. Drift alerts and reach-out nudges are off.</span><button type="button" class="btn small" data-act="unpause">Resume</button></div>`:''}
+  $('view').innerHTML=`<div id="signalRow"></div>${pausedUntil()?`<div class="pausebar"><span>⏸ Orbit is paused until <b>${esc(new Date(pausedUntil()+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}</b>. Drift alerts and reach-out nudges are off.</span><button type="button" class="btn small" data-act="unpause">Resume</button></div>`:''}
     <section class="hero"><div><h2>${cur.length} people in your ${y} sphere</h2>
       <p>${reached} of them heard from you this year. ${rl.length?`${rl.length} could use a hello.`:'Everyone has heard from you lately.'} ${bd.length?`${bd.length} birthday${bd.length>1?'s':''} in the next two months.`:''}</p></div>
       <canvas id="miniOrbit" width="150" height="150" aria-hidden="true"></canvas></section>
