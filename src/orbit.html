@@ -394,6 +394,13 @@ details.more .inner{padding-bottom:14px}
 .cmodal-box h3{margin:0 0 8px;font:700 20px/1.25 var(--display)}
 .cmodal-box p{margin:0 0 18px;color:var(--muted);font-size:15px;line-height:1.45}
 .cmodal-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cmodal-acts .btn{min-height:48px;justify-content:center}.cmodal-acts .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600}
+.addp{text-align:left;display:flex;flex-direction:column;gap:10px;max-width:380px;max-height:calc(100dvh - 48px);overflow-y:auto;padding-bottom:22px!important}.addp .cmodal-acts{flex:none;margin-top:2px}.addp>*{flex:none}.addp h3,.addp>p{text-align:center}.addp>p{margin:0 0 4px}
+.addp .sfield{display:flex;flex-direction:column;gap:6px}.addp .sfield input{min-height:46px}.req{color:var(--danger);font-weight:600}
+.ap-circ{border:0;padding:0;margin:0}.ap-circ legend{font-size:13px;color:var(--muted);margin-bottom:8px;padding:0}.ap-circ div{display:flex;flex-wrap:wrap;gap:8px}
+.ap-circ button{min-height:38px;padding:0 14px;border-radius:19px;border:1px solid var(--line2);background:var(--surface);color:var(--ink);font:500 14px var(--body);cursor:pointer}
+.ap-circ button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.ap-msg{margin:0!important;min-height:1em;font-size:13.5px;color:var(--danger);text-align:center}
+.cmodal-acts .btn.primary:disabled{opacity:.45}
 @keyframes cmfade{from{opacity:0}to{opacity:1}}
 
 /* ---------- palette, menu, toast ---------- */
@@ -1730,9 +1737,26 @@ $('palQ').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){palSel=Math.min
 $('pal').addEventListener('click',e=>{if(e.target.id==='pal')closePal();const b=e.target.closest('[data-pi]');if(b)palGo(+b.dataset.pi)});
 
 // ---------- events ----------
-async function addPerson(){const id='p-'+Date.now().toString(36);const p={id,first:'New',last:'person',circle:'Friend',years:[THIS_YEAR],touches:[]};people.set(id,p);if(view!=='people')setView('people');openPerson(id);
-  if(db){try{await db.doc('contacts/'+id).set(p);toast('Added')}catch(e){status('Couldn’t add just now.')}}
-  setTimeout(()=>{const f=$('f-first');if(f){f.focus();f.select()}},60)}
+function addPerson(){closeAddAsk();const cities=[...new Set([...people.values()].map(p=>(p.city||'').trim()).filter(Boolean))].sort();
+  const m=document.createElement('div');m.id='addModal';m.className='cmodal';
+  m.innerHTML=`<form class="cmodal-box addp" role="dialog" aria-modal="true" aria-labelledby="addT" novalidate>
+    <h3 id="addT">Add someone</h3><p>A few basics so they show up in the right place.</p>
+    <label class="sfield"><span>First name <b class="req">*</b></span><input id="ap-first" autocomplete="off" autocapitalize="words" required></label>
+    <label class="sfield"><span>Last name</span><input id="ap-last" autocomplete="off" autocapitalize="words"></label>
+    <label class="sfield"><span>Where they live <b class="req">*</b></span><input id="ap-city" list="ap-cities" autocomplete="off" placeholder="City or area" required><datalist id="ap-cities">${cities.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label>
+    <fieldset class="ap-circ"><legend>Circle <b class="req">*</b></legend><div>${circleList().map(c=>`<button type="button" data-apc="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>
+    <p class="ap-msg" role="status"></p>
+    <div class="cmodal-acts"><button class="btn" type="button" id="apNo">Cancel</button><button class="btn primary" type="submit" id="apYes" disabled>Add</button></div></form>`;
+  let circ='';const f=m.querySelector('form'),ok=()=>{const v=m.querySelector('#ap-first').value.trim()&&m.querySelector('#ap-city').value.trim()&&circ;m.querySelector('#apYes').disabled=!v;return v};
+  m.addEventListener('input',ok);
+  m.addEventListener('click',ev=>{if(ev.target===m||ev.target.id==='apNo'){closeAddAsk();return}const b=ev.target.closest('[data-apc]');if(b){circ=b.dataset.apc;m.querySelectorAll('[data-apc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));ok()}});
+  f.addEventListener('submit',async ev=>{ev.preventDefault();if(!ok()){m.querySelector('.ap-msg').textContent='First name, where they live and a circle are needed.';return}
+    const id='p-'+Date.now().toString(36);const p={id,first:m.querySelector('#ap-first').value.trim(),last:m.querySelector('#ap-last').value.trim(),city:m.querySelector('#ap-city').value.trim(),circle:circ,years:[THIS_YEAR],touches:[]};
+    closeAddAsk();people.set(id,p);if(view!=='people')setView('people');openPerson(id);
+    if(db){try{await db.doc('contacts/'+id).set(p);toast(`${p.first} added`)}catch(e){status('Couldn’t add just now.')}}});
+  document.body.appendChild(m);setTimeout(()=>m.querySelector('#ap-first').focus(),40)}
+function closeAddAsk(){const m=document.getElementById('addModal');if(m)m.remove()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAddAsk()});
 document.addEventListener('click',async e=>{
   const t=e.target.closest('button,a')||e.target;
   if(t.dataset.view&&!t.closest('#detail')){setView(t.dataset.view);return}
