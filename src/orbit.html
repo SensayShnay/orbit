@@ -1137,7 +1137,18 @@ function drawMapMarkers(){if(!mapState)return;const {mk,proj,t}=mapState;const {
     a.append('title').text(one?`${P.name}: ${G.n}`:G.items.map(i=>`${i.P.name} (${i.n})`).join(', '));
     if(one&&(t.k>3||G.n>=5))a.append('text').attr('class','mlabel').attr('x',r+6).attr('dy','0.35em').text(P.name)});
 }
-function mapListHTML(){const el=$('mapList');if(!el)return;const {places,miss,unk}=mapPlaces();
+// Look up coordinates for any city the map doesn't know yet (free Open-Meteo geocoder), then save them to meta/geo.
+const geoTried=new Set();let geoBusy=false;
+const GEO_HINT={'hudson valley':'New York','ny':'New York','nyc':'New York','fl':'Florida','ca':'California','ma':'Massachusetts','pa':'Pennsylvania','nj':'New Jersey','dc':'District of Columbia'};
+async function fillGeo(unk){if(geoBusy||!db)return;const todo=[...unk.keys()].filter(seg=>!geoTried.has(cityKey(seg)));if(!todo.length)return;geoBusy=true;const add={};
+  try{for(const seg of todo.slice(0,12)){const k=cityKey(seg);geoTried.add(k);const [name,...rest]=seg.replace(/\s*\(.*?\)\s*/g,' ').split(/,|\.\s/).map(x=>x.trim()).filter(Boolean);if(!name)continue;
+      const hint=rest.join(' ').toLowerCase(),want=(GEO_HINT[hint]||hint).toLowerCase();
+      try{const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=8&language=en&name='+encodeURIComponent(name));const j=await r.json();const res=(j&&j.results)||[];
+        const hit=(want&&res.find(x=>[x.admin1,x.country,x.country_code].some(v=>v&&String(v).toLowerCase().includes(want))))||res.sort((a,b)=>(b.population||0)-(a.population||0))[0];
+        if(hit)add[k]=[+hit.latitude.toFixed(4),+hit.longitude.toFixed(4),hit.name]}catch(_){}}
+    if(Object.keys(add).length){const cur=geoTable();meta.geo={...(meta.geo||{}),cities:{...cur,...add}};await db.doc('meta/geo').set(meta.geo);if(view==='map')renderMap()}}
+  finally{geoBusy=false}}
+function mapListHTML(){const el=$('mapList');if(!el)return;const {places,miss,unk}=mapPlaces();if(unk.size)fillGeo(unk);
   const tot=places.reduce((a,P)=>a+P.ppl.filter(x=>x.primary).length,0);
   if(mapSel){const P=places.find(x=>x.k===mapSel);if(P){const ps=P.ppl.slice().sort((a,b)=>fullName(a.p).localeCompare(fullName(b.p)));
     el.innerHTML=`<div class="sh"><h3>${esc(P.name)} · ${ps.length}</h3><button class="more" type="button" data-mapclear>All places</button></div><div class="grid3">${ps.map(({p,primary})=>pcard(p,primary?(p.circle||'Friend'):'Also lives here',lastSeen(p)?'Last contact '+ago(lastSeen(p)):'No contact yet')).join('')}</div>`;return}}
