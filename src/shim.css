@@ -1,1 +1,5 @@
 /* login styles moved to onboard.css */
+
+/* iOS zooms the whole page when you tap a text box with text smaller than 16px, and doesn't zoom back. Keep inputs at 16px on phones. */
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
+@media (pointer:coarse){input:not([type=checkbox]):not([type=radio]):not([type=range]),textarea,select{font-size:16px!important}}

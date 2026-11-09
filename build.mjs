@@ -13,7 +13,7 @@ swap('<meta name="claude:viewport-fit-sides" content="cover">', '');
 swap("${a(p.email?'mailto:'+p.email:'','mail','Email')}</div>", "${a(p.email?'mailto:'+p.email:'','mail','Email')}<button type=\"button\" data-orbit=\"invite\" data-pid=\"${esc(p.id)}\" data-first=\"${esc(p.first||'')}\" data-phone=\"${e164?'+'+e164:''}\"><svg><use href=\"#i-gift\"/></svg>${p.invitedAt?'Invited':'Invite'}</button></div>");
 swap('<section class="scard"><h3>About Orbit</h3>', '<section class="scard"><h3>Invite friends</h3><p class="lede">Every friend gets your code, so you can see who joined through you.</p><p id="orbitInviteInfo" style="margin:8px 0 12px">Loading your code…</p><button type="button" class="btn small primary" data-orbit="invite">Share an invite</button></section><section class="scard"><h3>About Orbit</h3>');
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0c0f1f">
 <style>*,*::before,*::after{box-sizing:border-box}body{margin:0;-webkit-text-size-adjust:100%}[hidden]{display:none!important}
 ${read('src/shim.css')}${read('src/onboard.css')}${read('src/signals.css')}</style>
