@@ -323,6 +323,7 @@ select.f{border:1px solid var(--line);background:var(--surface);border-radius:11
 .hdgrid small{display:block;color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:2px}
 .hdtags{display:flex;flex-wrap:wrap;gap:6px}.hdtags span{font-size:12.5px;border:1px solid var(--line);border-radius:999px;padding:4px 10px;color:var(--muted)}
 .hdread{background:var(--bg2);border-radius:12px;padding:12px 14px;font-size:14.5px;line-height:1.55}
+.rems{display:grid;gap:22px;max-width:760px}.remsec{display:grid;gap:8px}.remsec h3{margin:0 0 4px;display:flex;align-items:center;gap:8px;font:700 18px var(--display)}.remrow{display:flex;flex-wrap:wrap;align-items:center;gap:10px;justify-content:space-between;background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:10px 12px}.remwho{display:flex;align-items:center;gap:12px;border:0;background:none;color:var(--ink);font:inherit;text-align:left;cursor:pointer;min-width:0;flex:1 1 200px;min-height:44px;padding:0}.remwho b{display:block;font-size:15px}.remwho small{display:block;color:var(--muted);font-size:13px}.remacts{display:flex;gap:6px;flex-wrap:wrap}
 .bcal{display:grid;gap:18px}
 .btop{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
 .bnext{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,160px),1fr));gap:10px}
@@ -529,7 +530,7 @@ details.more .inner{padding-bottom:14px}
   <symbol id="i-gift" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="3.5" y="9" width="17" height="11.5" rx="1.5"/><path d="M3 9h18M12 9v11.5M12 9c-1.5-3.5-5.5-4.5-6-2s3.5 2 6 2zm0 0c1.5-3.5 5.5-4.5 6-2s-3.5 2-6 2z"/></symbol>
   <symbol id="i-cam" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l1.6-2.5h6.8L17 8h3v11H4z"/><circle cx="12" cy="13.2" r="3.4"/></symbol>
   <symbol id="i-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5a1 1 0 0 0-1-1H5a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h3"/></symbol>
-  <symbol id="i-cake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 21h16v-8H4zM4 16c2 1.2 4 1.2 6 0s4-1.2 6 0 3 1 4 0M12 13V9M12 6.5c-.9-.6-.9-1.8 0-3 .9 1.2.9 2.4 0 3z"/></symbol>
+  <symbol id="i-bell" viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9M10.3 21a1.94 1.94 0 0 0 3.4 0" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol><symbol id="i-cake" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 21h16v-8H4zM4 16c2 1.2 4 1.2 6 0s4-1.2 6 0 3 1 4 0M12 13V9M12 6.5c-.9-.6-.9-1.8 0-3 .9 1.2.9 2.4 0 3z"/></symbol>
 </svg>
 
 <div class="app">
@@ -546,7 +547,7 @@ details.more .inner{padding-bottom:14px}
     <button class="nav" type="button" data-view="outer"><svg><use href="#i-ring"/></svg>Outer Orbit<span class="n" data-count="outer"></span></button>
     <button class="nav" type="button" data-view="mem"><svg><use href="#i-moon"/></svg>In memory<span class="n" data-count="mem"></span></button>
     <div class="navsep"></div>
-    <button class="nav" type="button" data-view="bdays"><svg><use href="#i-cake"/></svg>Birthdays</button>
+    <button class="nav" type="button" data-view="rems"><svg><use href="#i-bell"/></svg>Reminders</button><button class="nav" type="button" data-view="bdays"><svg><use href="#i-cake"/></svg>Birthdays</button>
     <button class="nav" type="button" data-view="wrapped"><svg><use href="#i-gift"/></svg>Orbit Wrapped</button>
     <div class="grow"></div>
     <button class="nav" type="button" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
@@ -586,7 +587,7 @@ details.more .inner{padding-bottom:14px}
 <div class="menu" id="menu" hidden>
   <div class="grab"></div>
   <button class="nav" type="button" data-view="map"><svg><use href="#i-globe"/></svg>World map</button>
-  <button class="nav" type="button" data-view="bdays"><svg><use href="#i-cake"/></svg>Birthdays</button>
+  <button class="nav" type="button" data-view="rems"><svg><use href="#i-bell"/></svg>Reminders</button><button class="nav" type="button" data-view="bdays"><svg><use href="#i-cake"/></svg>Birthdays</button>
   <button class="nav" type="button" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
   <button class="nav" type="button" data-view="wrapped"><svg><use href="#i-gift"/></svg>Orbit Wrapped</button>
   <button class="nav" type="button" data-view="sug"><svg><use href="#i-spark"/></svg>Maybe add<span class="n" data-count="sug"></span></button>
@@ -629,7 +630,7 @@ let db=null, people=new Map(), profiles=new Map(), sugs=new Map(), selected=null
 let meta={}, sample=null, assetsNs=null, wYear=null;
 let draft={id:null,open:false,tone:'',angle:'',text:'',busy:false,ctl:null,note:''};
 let layout='grid'; try{layout=localStorage.getItem('sphere.layout')||'grid'}catch(_){}
-let hashView=false;try{const h=location.hash.slice(1); if(['home','orbit','people','map','reach','sug','long','outer','mem','wrapped','settings','bdays'].includes(h)){view=h;hashView=true}}catch(_){}
+let hashView=false;try{const h=location.hash.slice(1); if(['home','orbit','people','map','reach','sug','long','outer','mem','wrapped','settings','bdays','rems'].includes(h)){view=h;hashView=true}}catch(_){}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fullName=p=>[p.first,p.last].filter(Boolean).join(' ')||'Unnamed';
@@ -684,7 +685,7 @@ let remindOpen=false;
 const remAdd=(base,n)=>{const d=new Date(base+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
 const REMIND_OPTS=[[14,'Every 2 weeks'],[30,'Monthly'],[91,'Every 3 months'],[182,'Every 6 months'],[365,'Yearly']];
 function remindSuggest(p){if(p.circle==='Family')return 30;if(isInner(p)||p.layer==='inner')return 14;if(p.layer==='close')return 30;if(!isActive(p))return 365;return 91}
-function remindDue(p){const r=p.remind;if(!r)return null;if(r.date)return r.date;if(r.every)return remAdd(lastSeen(p)||r.setAt||TODAY,r.every);return null}
+function remindDue(p){const r=p.remind;if(!r)return null;let d=null;if(r.date)d=r.date;else if(r.every)d=remAdd(lastSeen(p)||r.setAt||TODAY,r.every);if(d&&r.snooze&&r.snooze>d)d=r.snooze;return d}
 function remindLabel(p){const r=p.remind;if(!r)return 'Off';if(r.date)return 'On '+new Date(r.date+'T12:00:00').toLocaleDateString(undefined,{month:'short',day:'numeric'});const o=REMIND_OPTS.find(x=>x[0]===r.every);return o?o[1]:'Every '+r.every+' days'}
 function remindHTML(p){const r=p.remind||null,sug=remindSuggest(p),due=remindDue(p),cur=r?(r.date?'date':r.every):'';
   const chip=(v,l)=>`<button type="button" class="rchip" data-remind="${v}" aria-pressed="${String(cur)===String(v)}">${esc(l)}${v===sug&&!r?' <small>Suggested</small>':''}</button>`;
@@ -770,6 +771,25 @@ function bdICS(){const E=bdEntries(),pad=n=>String(n).padStart(2,'0'),st=new Dat
     return ['BEGIN:VEVENT',`UID:orbit-${e.p.id}-${e.kid?'k'+i:'b'}@orbit`,`DTSTAMP:${st}`,`DTSTART;VALUE=DATE:${dt}`,`DTEND;VALUE=DATE:${de}`,'RRULE:FREQ=YEARLY',`SUMMARY:🎂 ${n.replace(/[,;]/g,' ')}`,'TRANSP:TRANSPARENT','BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:Birthday','TRIGGER:-PT15H','END:VALARM','END:VEVENT'].join('\r\n')});
   return ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Orbit//Birthdays//EN','X-WR-CALNAME:Orbit birthdays',...ev,'END:VCALENDAR'].join('\r\n')}
 document.addEventListener('click',e=>{if(view!=='bdays')return;const s=e.target.closest('[data-bscope]');if(s){bdScope=s.dataset.bscope;renderBdays();return}if(e.target.closest('[data-act="bdics"]'))offerFile('orbit-birthdays.ics',bdICS())});
+
+// ---------- reminders page ----------
+function renderRems(){const list=[...people.values()].filter(p=>p.remind).map(p=>({p,d:remindDue(p)})).filter(x=>x.d).sort((a,b)=>a.d<b.d?-1:1);
+  const due=list.filter(x=>x.d<=TODAY),soon=list.filter(x=>x.d>TODAY),bd=bdAll();
+  const fmt=d=>new Date(d+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});
+  const tel=p=>{const g=String(p.phone||'').replace(/\D/g,'');return g?(g.length===10?'1'+g:g):''};
+  const row=(x,isDue)=>{const p=x.p,ls=lastSeen(p),e=tel(p);return `<div class="remrow"><button type="button" class="remwho" data-id="${esc(p.id)}">${av(p,'sm')}<span><b>${esc(fullName(p))}</b><small>${esc(remindLabel(p))} · ${isDue?esc(ago(ls)):fmt(x.d)}</small></span></button>
+    ${isDue?`<div class="remacts">${e?`<a class="btn small" href="sms:+${e}" target="_blank" rel="noopener"><svg><use href="#i-msg"/></svg>Text</a>`:''}<button type="button" class="btn small primary" data-rdone="${esc(p.id)}">Done</button><button type="button" class="btn small" data-rsnooze="${esc(p.id)}">Snooze a week</button></div>`:''}</div>`};
+  const bday=({p,b,kid})=>`<div class="remrow"><button type="button" class="remwho" data-id="${esc(p.id)}">${av(kid?{...p,first:kid.name,last:'',photo:null}:p,'sm')}<span><b>${kid?esc(kid.name):esc(fullName(p))}</b><small>${kid?esc(p.first||'')+'’s kid · ':''}${b.days===0?'Today':b.days===1?'Tomorrow':'In '+b.days+' days'}</small></span></button></div>`;
+  $('view').innerHTML=`<div class="rems">
+   <section class="remsec"><h3>Due now <span class="pill">${due.length}</span></h3>${due.length?due.map(x=>row(x,true)).join(''):'<p class="hint">Nothing due. Nice work.</p>'}</section>
+   <section class="remsec"><h3>Coming up <span class="pill">${soon.length}</span></h3>${soon.length?soon.map(x=>row(x,false)).join(''):'<p class="hint">No reminders set yet. Open someone’s card and use Remind me.</p>'}</section>
+   <section class="remsec"><h3>Birthdays <span class="pill">${bd.length}</span></h3>${bd.length?bd.map(bday).join(''):'<p class="hint">No birthdays coming up soon.</p>'}</section>
+  </div>`}
+document.addEventListener('click',e=>{if(view!=='rems')return;const d=e.target.closest('[data-rdone]'),z=e.target.closest('[data-rsnooze]');if(!d&&!z)return;e.stopPropagation();
+  const p=people.get(d?d.dataset.rdone:z.dataset.rsnooze);if(!p||!p.remind)return;
+  if(d){const r={...p.remind};delete r.snooze;save(p.id,{touches:[...(p.touches||[]),{date:TODAY,kind:'Text',note:'Reached out (reminder)'}],remind:r.date?null:r},true);toast('Logged. Reminder reset')}
+  else{save(p.id,{remind:{...p.remind,snooze:remAdd(TODAY,7)}},true);toast('Snoozed a week')}
+  renderRems()},true);
 function nextBirthday(p){if(!p.birthday)return null;const [,m,d]=p.birthday.split('-').map(Number);if(!m||!d)return null;const t0=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());let nb=new Date(THIS_YEAR,m-1,d);if(nb<t0)nb=new Date(THIS_YEAR+1,m-1,d);return {date:nb,days:Math.round((nb-t0)/864e5)}}
 function haystack(p){const pr=profiles.get(p.id);return (pr?[pr.summary,(pr.facts||[]).join(' '),(pr.followUps||[]).join(' ')].join(' ').toLowerCase()+' ':'')+Object.entries(p).filter(([k])=>!/Stats$/.test(k)).map(([,v])=>Array.isArray(v)?v.map(x=>typeof x==='object'?Object.values(x).join(' '):x).join(' '):v).join(' ').toLowerCase()}
 const PHOTO_RE=/^[0-9a-f]{32}$/;
@@ -792,7 +812,7 @@ function css(v){return getComputedStyle(document.documentElement).getPropertyVal
 function weekRand(seed){let s=(Math.floor(NOW/6048e5)*9301+seed*49297)%233280;return ()=>{s=(s*9301+49297)%233280;return s/233280}}
 
 // ---------- views ----------
-const TITLES={bdays:['Birthdays','Every birthday you’ve saved, month by month'],settings:['Settings','Your profile, look, reminders and data'],map:['World map','Where your people live'],home:['Home',''],orbit:['Orbit map','Everyone you know, placed by how recently you were in touch'],people:['Everyone',''],reach:['Reach out','Who could use a hello'],sug:['Maybe add','People you message who aren’t in your sphere yet'],long:['Long Orbit','Still circling, just on a wider path'],outer:['Outer Orbit','Cleaners, contractors, clients and the people you work with'],mem:['In memory','People who have passed'],wrapped:['Orbit Wrapped','Your year in messages']};
+const TITLES={rems:['Reminders','Everyone Orbit will nudge you about'],bdays:['Birthdays','Every birthday you’ve saved, month by month'],settings:['Settings','Your profile, look, reminders and data'],map:['World map','Where your people live'],home:['Home',''],orbit:['Orbit map','Everyone you know, placed by how recently you were in touch'],people:['Everyone',''],reach:['Reach out','Who could use a hello'],sug:['Maybe add','People you message who aren’t in your sphere yet'],long:['Long Orbit','Still circling, just on a wider path'],outer:['Outer Orbit','Cleaners, contractors, clients and the people you work with'],mem:['In memory','People who have passed'],wrapped:['Orbit Wrapped','Your year in messages']};
 let builtFor=null;
 function setView(v){
   view=v; confirmDel=false; builtFor=null; stopOrbit();
@@ -816,6 +836,7 @@ function render(){
   else if(view==='map') renderMap();
   else if(view==='settings') renderSettings();
   else if(view==='bdays') renderBdays();
+  else if(view==='rems') renderRems();
   else renderPeople();
   renderDetail();
 }

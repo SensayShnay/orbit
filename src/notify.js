@@ -10,7 +10,7 @@ const iso=d=>`${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
 const at9=s=>{const [y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d,9,0,0)};
 const add=(s,n)=>{const d=at9(s);d.setDate(d.getDate()+n);return iso(d)};
 const lastSeen=p=>[...(p.touches||[]).map(t=>t.date),p.textStats&&p.textStats.last,p.whatsappStats&&p.whatsappStats.last,p.instagramStats&&p.instagramStats.last].filter(Boolean).sort().pop()||null;
-const due=(p,today)=>{const r=p.remind;if(!r)return null;if(r.date)return r.date;if(r.every)return add(lastSeen(p)||r.setAt||today,r.every);return null};
+const due=(p,today)=>{const r=p.remind;if(!r)return null;let d=null;if(r.date)d=r.date;else if(r.every)d=add(lastSeen(p)||r.setAt||today,r.every);if(d&&r.snooze&&r.snooze>d)d=r.snooze;return d};
 const idOf=s=>{let h=2166136261;for(const c of s){h^=c.charCodeAt(0);h=Math.imul(h,16777619)}return (h>>>1)%2000000000};
 const ago=d=>{if(!d)return '';const n=Math.round((Date.now()-at9(d))/864e5);return n<14?`${n} days`:n<60?`${Math.round(n/7)} weeks`:n<365?`${Math.round(n/30)} months`:`over a year`};
 let people=[],settings={},timer=0,asked=false;
