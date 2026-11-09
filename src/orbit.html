@@ -389,6 +389,12 @@ details.more .inner{padding-bottom:14px}
 .lchip .ul{color:var(--faint);font-weight:400;padding:0 6px}
 #linkSel,#mergeSel{border:1px solid var(--line);background:var(--bg2);border-radius:9px;padding:7px 9px;max-width:100%}
 .dfoot{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding-top:16px}
+.cmodal{position:fixed;inset:0;z-index:10050;background:rgba(10,8,20,.45);display:flex;align-items:center;justify-content:center;padding:24px;animation:cmfade .15s ease-out}
+.cmodal-box{width:100%;max-width:340px;background:var(--surface);color:var(--ink);border-radius:20px;padding:22px 20px 18px;box-shadow:0 20px 60px rgba(0,0,0,.25);text-align:center}
+.cmodal-box h3{margin:0 0 8px;font:700 20px/1.25 var(--display)}
+.cmodal-box p{margin:0 0 18px;color:var(--muted);font-size:15px;line-height:1.45}
+.cmodal-acts{display:grid;grid-template-columns:1fr 1fr;gap:10px}.cmodal-acts .btn{min-height:48px;justify-content:center}.cmodal-acts .btn.danger{background:var(--danger);border-color:var(--danger);color:#fff;font-weight:600}
+@keyframes cmfade{from{opacity:0}to{opacity:1}}
 
 /* ---------- palette, menu, toast ---------- */
 .pal{position:fixed;inset:0;z-index:80;display:flex;justify-content:center;align-items:flex-start;padding-top:calc(env(safe-area-inset-top,0px) + 10vh);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));background:rgba(5,6,15,.55);backdrop-filter:blur(3px)}
@@ -1373,6 +1379,8 @@ function renderSug(){
 }
 
 // ---------- detail sheet ----------
+function closeDelAsk(){const m=document.getElementById('delModal');if(m)m.remove()}
+document.addEventListener('keydown',e=>{if(e.key==='Escape')closeDelAsk()});
 function openPerson(id){selected=id;confirmDel=false;mergeFrom=null;kEdit=null;lastRenderedId=null;renderDetail();$('detail').scrollTop=0}
 window.orbitOpenPerson=id=>{if(people.has(id))openPerson(id)};
 function closePerson(){if(draft.ctl)draft.ctl.abort();selected=null;renderDetail()}
@@ -1461,7 +1469,7 @@ function renderDetail(){
       <details class="more"${mergeFrom?' open':''}><summary>Merge a duplicate</summary><div class="inner"><p class="hint" style="margin:0">Got two cards for the same person? Pick the other card and it gets folded into this one: details fill in where this card is blank, years, touches, connections and message stats combine, and the other card is removed.</p>
         <div class="mergebox"><select id="mergeSel" aria-label="Card to merge into this one"><option value="">Pick the duplicate…</option>${[...people.values()].filter(o=>o.id!==p.id).sort((a,b)=>simScore(p,b)-simScore(p,a)||fullName(a).localeCompare(fullName(b))).map(o=>`<option value="${esc(o.id)}"${mergeFrom===o.id?' selected':''}>${esc(fullName(o))}${o.phone?' · '+esc(o.phone):''}</option>`).join('')}</select>
         ${mergeFrom&&people.has(mergeFrom)?`<button class="btn small primary" type="button" id="mergeYes">Merge ${esc(people.get(mergeFrom).first||'')} into ${esc(p.first||'this card')}</button><button class="btn small" type="button" id="mergeNo">Cancel</button>`:''}</div></div></details>
-      <div class="dfoot">${p.photo&&assetsNs?`<button class="btn small" type="button" id="photoRm">Remove photo</button>`:''}<span style="flex:1"></span>${confirmDel?`<span class="meta">Remove ${esc(p.first||'them')} for good?</span><button class="btn small" type="button" id="delNo">Keep</button><button class="btn small danger" type="button" id="delYes">Remove</button>`:`<button class="btn small danger" type="button" id="delAsk">Remove person</button>`}</div>
+      <div class="dfoot">${p.photo&&assetsNs?`<button class="btn small" type="button" id="photoRm">Remove photo</button>`:''}<span style="flex:1"></span><button class="btn small danger" type="button" id="delAsk">Remove person</button></div>
     </div>`;
   refreshTouches(p); d.scrollTop=scroll;
 }
@@ -1758,9 +1766,11 @@ document.addEventListener('click',async e=>{
   if(row){openPerson(row.dataset.id);return}
   if(t.dataset.yr){const p=people.get(selected),y=+t.dataset.yr,s=new Set(p.years||[]);s.has(y)?s.delete(y):s.add(y);save(p.id,{years:[...s].sort()});return}
   if(t.dataset.rm!==undefined){const p=people.get(selected);save(p.id,{touches:(p.touches||[]).filter((_,i)=>i!==+t.dataset.rm)});return}
-  if(t.id==='delAsk'){confirmDel=true;lastRenderedId=null;renderDetail();return}
-  if(t.id==='delNo'){confirmDel=false;lastRenderedId=null;renderDetail();return}
-  if(t.id==='delYes'){const id=selected;people.delete(id);selected=null;confirmDel=false;render();toast('Removed');if(db)db.doc('contacts/'+id).delete().catch(()=>status('Couldn’t remove just now.'));return}
+  if(t.id==='delAsk'){const p=people.get(selected);if(!p)return;closeDelAsk();const m=document.createElement('div');m.id='delModal';m.className='cmodal';
+    m.innerHTML=`<div class="cmodal-box" role="alertdialog" aria-modal="true" aria-labelledby="delT" aria-describedby="delD"><h3 id="delT">Remove ${esc(fullName(p)||p.first||'this person')}?</h3><p id="delD">Their notes, history and reminders will be deleted. This can’t be undone.</p><div class="cmodal-acts"><button class="btn" type="button" id="delNo">Keep</button><button class="btn danger" type="button" id="delYes">Remove</button></div></div>`;
+    m.addEventListener('click',ev=>{if(ev.target===m)closeDelAsk()});document.body.appendChild(m);setTimeout(()=>{const b=m.querySelector('#delNo');if(b)b.focus()},30);return}
+  if(t.id==='delNo'){closeDelAsk();return}
+  if(t.id==='delYes'){closeDelAsk();const id=selected;people.delete(id);selected=null;confirmDel=false;render();toast('Removed');if(db)db.doc('contacts/'+id).delete().catch(()=>status('Couldn’t remove just now.'));return}
   if(!$('menu').hidden&&!t.closest('#menu')&&!t.closest('#tabMore'))$('menu').hidden=true;
 });
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='actBox')actOpen=e.target.open},true);
