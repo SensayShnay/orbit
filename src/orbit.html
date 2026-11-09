@@ -565,7 +565,6 @@ details.more .inner{padding-bottom:14px}
     <button class="nav" type="button" data-view="reach"><svg><use href="#i-reach"/></svg>Reach out<span class="n" data-count="reach"></span></button>
     <div class="navsep"></div>
     <button class="nav" type="button" data-view="sug"><svg><use href="#i-spark"/></svg>Maybe add<span class="n" data-count="sug"></span></button>
-    <button class="nav" type="button" data-view="long"><svg><use href="#i-ring"/></svg>Long Orbit<span class="n" data-count="long"></span></button>
     <button class="nav" type="button" data-view="outer"><svg><use href="#i-ring"/></svg>Outer Orbit<span class="n" data-count="outer"></span></button>
     <button class="nav" type="button" data-view="mem"><svg><use href="#i-moon"/></svg>In memory<span class="n" data-count="mem"></span></button>
     <div class="navsep"></div>
@@ -613,7 +612,6 @@ details.more .inner{padding-bottom:14px}
   <button class="nav" type="button" data-view="settings"><svg><use href="#i-gear"/></svg>Settings</button>
   <button class="nav" type="button" data-view="wrapped"><svg><use href="#i-gift"/></svg>Orbit Wrapped</button>
   <button class="nav" type="button" data-view="sug"><svg><use href="#i-spark"/></svg>Maybe add<span class="n" data-count="sug"></span></button>
-  <button class="nav" type="button" data-view="long"><svg><use href="#i-ring"/></svg>Long Orbit<span class="n" data-count="long"></span></button>
     <button class="nav" type="button" data-view="outer"><svg><use href="#i-ring"/></svg>Outer Orbit<span class="n" data-count="outer"></span></button>
   <button class="nav" type="button" data-view="mem"><svg><use href="#i-moon"/></svg>In memory<span class="n" data-count="mem"></span></button>
   <button class="nav" type="button" data-act="palette"><svg><use href="#i-search"/></svg>Find anyone</button>
@@ -652,7 +650,7 @@ let db=null, people=new Map(), profiles=new Map(), sugs=new Map(), selected=null
 let meta={}, sample=null, assetsNs=null, wYear=null;
 let draft={id:null,open:false,tone:'',angle:'',text:'',busy:false,ctl:null,note:''};
 let layout='grid'; try{layout=localStorage.getItem('sphere.layout')||'grid'}catch(_){}
-let hashView=false;try{const h=location.hash.slice(1); if(['home','orbit','people','map','reach','sug','long','outer','mem','wrapped','settings','bdays','rems'].includes(h)){view=h;hashView=true}}catch(_){}
+let hashView=false;try{const h=location.hash.slice(1); if(h==='long')location.hash='#outer';if(['home','orbit','people','map','reach','sug','outer','mem','wrapped','settings','bdays','rems'].includes(h==='long'?'outer':h)){view=h==='long'?'outer':h;hashView=true}}catch(_){}
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fullName=p=>[p.first,p.last].filter(Boolean).join(' ')||'Unnamed';
@@ -824,7 +822,7 @@ function addDays(n){const d=new Date(NOW);d.setDate(d.getDate()+n);return d.toIS
 function hook(p){const pr=profiles.get(p.id);if(pr&&pr.followUps&&pr.followUps[0])return 'Bring up: '+pr.followUps[0];if(p.whereMet)return 'Met '+p.whereMet+(p.yearMet?' in '+p.yearMet:'');if(p.job)return p.job;return msgCount(p)?msgCount(p).toLocaleString()+' messages together':''}
 function driftCard(p){return `<div class="drift"><button class="top2" type="button" data-id="${esc(p.id)}" style="border:0;background:none;padding:0;text-align:left;color:inherit">${av(p,'sm')}<div><div class="nm">${esc(fullName(p))}</div><div class="meta">Quiet ${esc(ago(lastSeen(p)).replace(' ago',''))} · last ${esc(lastSeen(p))}</div></div>${isNewDrift(p)?'<span class="pill new">New</span>':''}</button>
   <span class="why">${esc(hook(p))}</span>
-  <div class="acts">${sample?`<button class="btn small primary" type="button" data-draftfor="${esc(p.id)}"><svg><use href="#i-wand"/></svg>Draft a text</button>`:''}<button class="btn small" type="button" data-snooze="${esc(p.id)}">Snooze 3 mo</button><button class="btn small" type="button" data-tolong="${esc(p.id)}">Long Orbit</button></div></div>`}
+  <div class="acts">${sample?`<button class="btn small primary" type="button" data-draftfor="${esc(p.id)}"><svg><use href="#i-wand"/></svg>Draft a text</button>`:''}<button class="btn small" type="button" data-snooze="${esc(p.id)}">Snooze 3 mo</button><button class="btn small" type="button" data-tolong="${esc(p.id)}">Outer Orbit</button></div></div>`}
 const subE=p=>[(p.city||'').replace(/Hudson Valley/g,'HV'),p.circle===OUTER&&p.role&&p.role!==p.job?p.role:'',p.job].filter(Boolean).join(' · ');
 const sub=p=>[p.circle===OUTER&&p.role&&p.role!==p.job?p.role:'',p.job,p.city].filter(Boolean).join(' · ');
 function status(msg){const b=$('statusBox');b.hidden=!msg;b.textContent=msg||''}
@@ -886,9 +884,6 @@ function renderHome(){
   const dl=SET.remind.homeDrift?driftList():[], nd=dl.filter(isNewDrift).length;
   const rl=reachList();
   $('view').innerHTML=`<div id="signalRow"></div>${pausedUntil()?`<div class="pausebar"><span>⏸ Orbit is paused until <b>${esc(new Date(pausedUntil()+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}</b>. Drift alerts and reach-out nudges are off.</span><button type="button" class="btn small" data-act="unpause">Resume</button></div>`:''}
-    <section class="hero"><div><h2>Your ${y} sphere: ${cur.length} ${cur.length===1?'person':'people'}</h2>
-      <p>${reached} of them heard from you this year. ${rl.length?`${rl.length} could use a hello.`:'Everyone has heard from you lately.'} ${bd.length?`${bd.length} birthday${bd.length>1?'s':''} in the next two months.`:''}</p></div>
-      <canvas id="miniOrbit" width="150" height="150" aria-hidden="true"></canvas></section>
     <div class="stats">
       <button class="stat" type="button" data-view="people"><b>${all.filter(isActive).length}</b><span>people</span></button>
       <button class="stat" type="button" data-view="people"><b>${reached}</b><span>reached in ${THIS_YEAR}</span></button>
@@ -1010,7 +1005,7 @@ document.addEventListener('click',e=>{if(!document.documentElement.classList.con
 
 // ---------- custom circles, pause, import ----------
 function customCircles(){return (SET.custom&&SET.custom.circles)||[]}
-function circleList(){return ['Friend','Family',...customCircles().map(c=>c.name),ORBIT,OUTER,MEM]}
+function circleList(){return ['Friend','Family',...customCircles().map(c=>c.name),OUTER,MEM]}
 function customColor(name){const c=customCircles().find(x=>x.name===name);return c?c.color:null}
 function circleOpts(){return customCircles().map(c=>`<option>${esc(c.name)}</option>`).join('')}
 function pausedUntil(){const u=SET.remind.pauseUntil;return u&&u>=TODAY?u:null}
@@ -1053,7 +1048,7 @@ document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.c
 function circlesHTML(){const all=[...people.values()];const cc=customCircles();
   return `<div class="scircles">${['Friend','Family'].map(n=>`<div class="scircle"><i style="background:var(--${n==='Family'?'fam':'ink'})"></i><b>${n}</b><small>${all.filter(p=>(p.circle||'Friend')===n).length} people · built in</small></div>`).join('')}
     ${cc.map(c=>`<div class="scircle"><input type="color" data-ccolor="${esc(c.name)}" value="${esc(c.color)}" aria-label="Color for ${esc(c.name)}"><b>${esc(c.name)}</b><small>${all.filter(p=>p.circle===c.name).length} people</small><button type="button" class="fux" data-cdel="${esc(c.name)}" aria-label="Remove ${esc(c.name)}">×</button></div>`).join('')}
-    ${[ORBIT,OUTER,MEM].map(n=>`<div class="scircle"><i style="background:var(--${n===ORBIT?'orbit':n===OUTER?'outer':'mem'})"></i><b>${n}</b><small>${all.filter(p=>p.circle===n).length} people · built in</small></div>`).join('')}</div>
+    ${[OUTER,MEM].map(n=>`<div class="scircle"><i style="background:var(--${n===ORBIT?'orbit':n===OUTER?'outer':'mem'})"></i><b>${n}</b><small>${all.filter(p=>p.circle===n).length} people · built in</small></div>`).join('')}</div>
     <div class="scadd"><input type="color" id="cNewColor" value="#e8a0ff" aria-label="New circle color"><input id="cNew" placeholder="New circle, like Music, Work friends, Neighbors" aria-label="New circle name"><button type="button" class="btn small" data-cadd>Add circle</button></div>
     <p class="hint">Custom circles count as active, like Friend. Removing one leaves its people in place; they show as Friend until you move them.</p>`}
 
@@ -1074,7 +1069,7 @@ const MAP_VIEWS={world:null,us:[[-125,24],[-66,50]],ne:[[-80.5,38.3],[-69,45.6]]
 function renderMap(){
   if(builtFor!=='map'){builtFor='map';mapSel=null;
     $('view').innerHTML=`<div class="mapbar"><div class="ozseg" role="group" aria-label="Zoom to">${[['world','World'],['us','USA'],['ne','Northeast'],['hv','Hudson Valley']].map(([k,l])=>`<button type="button" data-mz="${k}" aria-pressed="${k==='world'}">${l}</button>`).join('')}</div>
-      <select class="f" id="mapCircle" aria-label="Circle"><option value="">Everyone</option><option value="__active">Friends + family</option><option value="__inner">Inner sphere</option><option>Friend</option><option>Family</option>${circleOpts()}<option>Long Orbit</option><option>Outer Orbit</option><option>In memory</option></select></div>
+      <select class="f" id="mapCircle" aria-label="Circle"><option value="">Everyone</option><option value="__active">Friends + family</option><option value="__inner">Inner sphere</option><option>Friend</option><option>Family</option>${circleOpts()}<option>Outer Orbit</option><option>In memory</option></select></div>
       <div class="mapwrap" id="mapWrap"><svg id="mapSvg" role="img" aria-label="World map of where your people live"></svg><div class="maploading" id="mapLoading">Loading the map…</div><div class="mapzbtns"><button type="button" data-mzs="1.6" aria-label="Zoom in">+</button><button type="button" data-mzs="0.625" aria-label="Zoom out">−</button></div></div>
       <div id="mapList"></div>`;
     $('mapCircle').value=mapCircle;
@@ -1253,7 +1248,7 @@ function drawOrbit(){
   const dz=zTarget-zCur; if(Math.abs(dz)>.002){zCur+=reduce?dz:dz*.12;moving=true}else zCur=zTarget;
   orbitStars.forEach(s=>{const tv=inLevel(s,orbitLevel)?1:0;const d=tv-s.va;if(Math.abs(d)>.01){s.va+=reduce?d:d*.14;moving=true}else s.va=tv});
   // guide rings
-  [[.15,'Inner',C.inner],[.26,'Family'],[.36,'Now'],[.55,'This year'],[.76,'Years'],[.86,'Long Orbit',C.long],[.955,'Outer Orbit',C.outer]].forEach(([r,l,col],i)=>{
+  [[.15,'Inner',C.inner],[.26,'Family'],[.36,'Now'],[.55,'This year'],[.76,'Years'],[.955,'Outer Orbit',C.outer]].forEach(([r,l,col],i)=>{
     const rr=r*zCur; if(rr>1.04)return; const fade=Math.max(0,Math.min(1,(1.04-rr)/.1));
     x.beginPath();x.ellipse(g.cx,g.cy,rr*g.R,rr*g.R*.92,0,0,Math.PI*2);x.strokeStyle=col||C.line;x.globalAlpha=(col?.5:1)*fade;x.setLineDash(col?[3,5]:[2,6]);x.lineWidth=1;x.stroke();x.setLineDash([]);
     const la=-Math.PI/2+(i-3)*.5;x.fillStyle=C.faint;x.font='500 10px "JetBrains Mono", monospace';x.textAlign='center';x.fillText(l.toUpperCase(),g.cx+Math.cos(la)*rr*g.R,g.cy+Math.sin(la)*rr*g.R*.92-5);x.globalAlpha=1;
@@ -1344,7 +1339,7 @@ function renderPeople(){
     $('view').innerHTML=`${intro?`<p class="intro ${intro[0]}">${intro[1]}</p>`:''}
       <div class="controls">
         <label class="search"><svg><use href="#i-search"/></svg><input id="q" type="search" placeholder="Search names, jobs, cities, anything you know" autocomplete="off"></label>
-        ${view==='people'?`<select class="f" id="fCircle" aria-label="Circle"><option value="">Everyone</option><option value="__active">Friends + family</option><option value="__inner">Inner sphere</option><option>Friend</option><option>Family</option>${circleOpts()}<option>Long Orbit</option><option>Outer Orbit</option><option>In memory</option></select>`:view==='outer'?`<select class="f" id="fCircle" aria-label="Role"><option value="">Every role</option>${ROLES.map(r=>`<option>${r}</option>`).join('')}</select>`:'<select class="f" id="fCircle" hidden aria-hidden="true"><option value=""></option></select>'}
+        ${view==='people'?`<select class="f" id="fCircle" aria-label="Circle"><option value="">Everyone</option><option value="__active">Friends + family</option><option value="__inner">Inner sphere</option><option>Friend</option><option>Family</option>${circleOpts()}<option>Outer Orbit</option><option>In memory</option></select>`:view==='outer'?`<select class="f" id="fCircle" aria-label="Role"><option value="">Every role</option>${ROLES.map(r=>`<option>${r}</option>`).join('')}</select>`:'<select class="f" id="fCircle" hidden aria-hidden="true"><option value=""></option></select>'}
         <select class="f" id="fYear" aria-label="Sphere year"></select>
         <select class="f" id="fMet" aria-label="Where we met"></select>
         <select class="f" id="fCity" aria-label="City"></select>
@@ -1400,7 +1395,7 @@ function renderReach(){
 // ---------- suggestions ----------
 function liveSugs(){return [...sugs.values()].filter(s=>!s.dismissed)}
 function renderSug(){
-  const groups=[['Friend','People you text a lot lately'],['Family','Family'],[ORBIT,'Long orbit candidates'],[OUTER,'Outer Orbit: cleaners, contractors, clients and work']];
+  const groups=[['Friend','People you text a lot lately'],['Family','Family'],[OUTER,'Outer Orbit: cleaners, contractors, clients and work']];
   const all=liveSugs().sort((a,b)=>(a.circle===OUTER&&b.circle===OUTER?(ROLES.indexOf(a.role)-ROLES.indexOf(b.role)):0)||(b.score||0)-(a.score||0));
   const card=s=>`<div class="sug"><span class="who" style="display:flex;gap:10px;align-items:center">${av({id:s.id,first:s.name.split(' ')[0],last:s.name.split(' ').slice(1).join(' '),circle:s.circle})}<span style="min-width:0"><span class="nm" style="display:block">${esc(s.name)}${s.role?`<span class="role">${esc(s.role)}</span>`:''}</span><span class="meta" style="display:block">${esc(s.stat||'')}</span></span></span><span class="why">${esc(s.why||'')}</span><div class="acts"><button class="btn small primary" type="button" data-sadd="${esc(s.id)}">Add${s.circle&&s.circle!=='Friend'?' to '+esc(s.circle):''}</button><button class="btn small" type="button" data-sno="${esc(s.id)}">Not now</button></div></div>`;
   $('view').innerHTML=`<p class="intro sug">People you message on iMessage and WhatsApp who aren't on your map yet. Friends come first; the people who keep your homes and work running sit at the bottom under Outer Orbit. Not now hides someone for good.</p>`+
@@ -1493,7 +1488,7 @@ function renderDetail(){
         <div class="fields" style="margin-top:12px"><div class="fld"><label for="f-circle">Circle</label><select id="f-circle" data-k="circle">${[...new Set([...circleList(),p.circle||'Friend'])].map(c=>`<option${(p.circle||'Friend')===c?' selected':''}>${esc(c)}</option>`).join('')}</select></div>
         ${p.circle===MEM?`<div class="fld"><label for="f-passed">Passed away</label><input id="f-passed" data-k="passed" type="date" value="${esc(p.passed||'')}"></div><div class="fld full"><label for="f-remember">How I remember them</label><textarea id="f-remember" data-k="remember" rows="2">${esc(p.remember||'')}</textarea></div>`:''}
         ${p.circle===OUTER?`<div class="fld"><label for="f-role">Role</label><select id="f-role" data-k="role"><option value="">Pick one</option>${ROLES.map(r=>`<option${p.role===r?' selected':''}>${r}</option>`).join('')}</select></div>`:''}
-        ${p.circle===ORBIT?`<div class="fld full"><label for="f-drift">What pulled us apart, or what might pull us back</label><textarea id="f-drift" data-k="drift" rows="2">${esc(p.drift||'')}</textarea></div>`:''}</div></div>
+        ${p.drift?`<div class="fld full"><label for="f-drift">What pulled us apart, or what might pull us back</label><textarea id="f-drift" data-k="drift" rows="2">${esc(p.drift||'')}</textarea></div>`:''}</div></div>
       ${grp('Who they are',FIELDS.basics,true)}${grp('Contact',FIELDS.contact)}${grp('Our story',FIELDS.story)}${grp('Reflections',FIELDS.reflect)}${grp('Ritual',FIELDS.ritual)}${remindHTML(p)}${kidsHTML(p)}${hdHTML(p)}
       <details class="more"${mergeFrom?' open':''}><summary>Merge a duplicate</summary><div class="inner"><p class="hint" style="margin:0">Got two cards for the same person? Pick the other card and it gets folded into this one: details fill in where this card is blank, years, touches, connections and message stats combine, and the other card is removed.</p>
         <div class="mergebox"><select id="mergeSel" aria-label="Card to merge into this one"><option value="">Pick the duplicate…</option>${[...people.values()].filter(o=>o.id!==p.id).sort((a,b)=>simScore(p,b)-simScore(p,a)||fullName(a).localeCompare(fullName(b))).map(o=>`<option value="${esc(o.id)}"${mergeFrom===o.id?' selected':''}>${esc(fullName(o))}${o.phone?' · '+esc(o.phone):''}</option>`).join('')}</select>
@@ -1765,7 +1760,7 @@ $('roul').addEventListener('click',e=>{if(e.target.id==='roul')closeSpin()});
 document.addEventListener('input',e=>{if(e.target.id==='spinOut'&&!spin.busy){spin.text=e.target.value;document.querySelectorAll('#rbox a[href^="sms:"],#rbox a[href^="https://wa.me"]').forEach(a=>{a.href=a.href.replace(/(body|text)=.*$/,'$1='+encodeURIComponent(spin.text))})}});
 
 // ---------- palette ----------
-const CMDS=[['home','Go to Home','home'],['orbit','Open the orbit map','orbit'],['people','See everyone','people'],['reach','Reach out','reach'],['wrapped','Orbit Wrapped','gift'],['spin','Spin the sphere','dice'],['sug','Maybe add','spark'],['long','Long Orbit','ring'],['outer','Outer Orbit','ring'],['mem','In memory','moon']];
+const CMDS=[['home','Go to Home','home'],['orbit','Open the orbit map','orbit'],['people','See everyone','people'],['reach','Reach out','reach'],['wrapped','Orbit Wrapped','gift'],['spin','Spin the sphere','dice'],['sug','Maybe add','spark'],['outer','Outer Orbit','ring'],['mem','In memory','moon']];
 let palSel=0,palItems=[];
 function openPal(){$('pal').hidden=false;$('palQ').value='';palRender();setTimeout(()=>$('palQ').focus(),20)}
 function closePal(){$('pal').hidden=true}
@@ -1825,7 +1820,7 @@ document.addEventListener('click',async e=>{
   if(t.dataset.wy){wYear=t.dataset.wy;renderWrapped();window.scrollTo(0,0);return}
   if(t.dataset.draftfor){const id=t.dataset.draftfor;openPerson(id);openDraft(id);lastRenderedId=null;renderDetail();runDraft();return}
   if(t.dataset.snooze){save(t.dataset.snooze,{driftSnooze:addDays(91)});toast('Snoozed for 3 months');return}
-  if(t.dataset.tolong){save(t.dataset.tolong,{circle:ORBIT});toast('Moved to Long Orbit');return}
+  if(t.dataset.tolong){save(t.dataset.tolong,{circle:OUTER});toast('Moved to Outer Orbit');return}
   if(t.dataset.act==='drafttoggle'){if(draft.open&&draft.id===selected){if(draft.ctl)draft.ctl.abort();draft.open=false}else openDraft(selected);lastRenderedId=null;renderDetail();return}
   if(t.dataset.tone){draft.tone=t.dataset.tone;document.querySelectorAll('[data-tone]').forEach(b=>b.setAttribute('aria-pressed',b.dataset.tone===draft.tone));return}
   if(t.dataset.act==='draftgo'){runDraft();return}
@@ -1843,7 +1838,7 @@ document.addEventListener('click',async e=>{
   if(t.id==='mergeNo'){mergeFrom=null;lastRenderedId=null;renderDetail();return}
   if(t.id==='photoRm'){const p=people.get(selected);const old=p&&p.photo;if(!old)return;save(p.id,{photo:null});if(assetsNs)assetsNs.delete(old).catch(()=>{});toast('Photo removed');return}
   const sa=t.dataset.sadd,sn=t.dataset.sno;
-  if(sa||sn){const s=sugs.get(sa||sn);if(!s||!db)return;t.disabled=true;try{if(sa){const id='p-'+Date.now().toString(36);const parts=String(s.name).trim().split(/\s+/);const p={id,first:parts[0]||s.name,last:parts.slice(1).join(' ')||null,circle:s.circle||'Friend',years:s.circle===ORBIT||s.circle===OUTER?[]:[THIS_YEAR],touches:[]};if(s.role)p.role=s.role;if(String(s.handle).includes('@'))p.email=s.handle;else p.phone=s.handle;if(s.why)p.notes=s.why;await db.doc('contacts/'+id).set(p);await db.doc('suggestions/'+s.id).delete();toast('Added '+p.first)}else{await db.doc('suggestions/'+s.id).update({dismissed:true,dismissedAt:TODAY});toast('Hidden')}}catch(_){status('Couldn’t update just now. Try again in a moment.');t.disabled=false}return}
+  if(sa||sn){const s=sugs.get(sa||sn);if(!s||!db)return;t.disabled=true;try{if(sa){const id='p-'+Date.now().toString(36);const parts=String(s.name).trim().split(/\s+/);const p={id,first:parts[0]||s.name,last:parts.slice(1).join(' ')||null,circle:(s.circle===ORBIT?OUTER:s.circle)||'Friend',years:s.circle===ORBIT||s.circle===OUTER?[]:[THIS_YEAR],touches:[]};if(s.role)p.role=s.role;if(String(s.handle).includes('@'))p.email=s.handle;else p.phone=s.handle;if(s.why)p.notes=s.why;await db.doc('contacts/'+id).set(p);await db.doc('suggestions/'+s.id).delete();toast('Added '+p.first)}else{await db.doc('suggestions/'+s.id).update({dismissed:true,dismissedAt:TODAY});toast('Hidden')}}catch(_){status('Couldn’t update just now. Try again in a moment.');t.disabled=false}return}
   const row=t.closest&&t.closest('[data-id]');
   if(row){openPerson(row.dataset.id);return}
   if(t.dataset.yr){const p=people.get(selected),y=+t.dataset.yr,s=new Set(p.years||[]);s.has(y)?s.delete(y):s.add(y);save(p.id,{years:[...s].sort()});return}
@@ -1887,7 +1882,7 @@ setView(view); drawLogo();
   db.collection('meta').onSnapshot(s=>{const n={};s.docs.forEach(d=>{if(d.id==='wrapped'||d.id==='voice'||d.id==='wrappedExtra'||d.id==='wrappedFun'||d.id==='geo')n[d.id]=d.data();if(d.id==='settings')n.settings=d.data()});meta=n;{const first=!window.__setLoaded;window.__setLoaded=1;SET=mergeSet(meta.settings);applySettings();if(first&&!hashView&&SET.look.startView&&SET.look.startView!==view)setView(SET.look.startView)}if(view==='settings'&&!document.activeElement?.dataset?.set)render();if(gotP&&(view==='home'||view==='wrapped'||view==='map'))render()},()=>{});
   db.collection('profiles').onSnapshot(s=>{const n=new Map();s.docs.forEach(d=>n.set(d.id,d.data()));profiles=n;lastRenderedId=null;if(gotP)render()},()=>{});
   db.collection('suggestions').onSnapshot(s=>{const n=new Map();s.docs.forEach(d=>n.set(d.id,{...d.data(),id:d.id}));sugs=n;if(gotP)render()},()=>{});
-  db.collection('contacts').onSnapshot(s=>{const n=new Map();s.docs.forEach(d=>{const x={...d.data()};const ex=x.whatsappExport,ws=x.whatsappStats;if(ex&&ex.count){if(!ws||!ws.count||ex.count>=ws.count){const by={...(ex.byYear||{})};Object.entries((ws&&ws.byYear)||{}).forEach(([y,c])=>{if(!by[y]||c>by[y])by[y]=c});x.whatsappStats={...ex,byYear:by,last:[ex.last,ws&&ws.last].filter(Boolean).sort().pop()}}}n.set(d.id,{...x,id:d.id})});people=n;gotP=true;loaded=true;if(selected&&!people.has(selected))selected=null;
+  db.collection('contacts').onSnapshot(s=>{const n=new Map();s.docs.forEach(d=>{const x={...d.data()};const ex=x.whatsappExport,ws=x.whatsappStats;if(ex&&ex.count){if(!ws||!ws.count||ex.count>=ws.count){const by={...(ex.byYear||{})};Object.entries((ws&&ws.byYear)||{}).forEach(([y,c])=>{if(!by[y]||c>by[y])by[y]=c});x.whatsappStats={...ex,byYear:by,last:[ex.last,ws&&ws.last].filter(Boolean).sort().pop()}}}if(x.circle===ORBIT)x.circle=OUTER;n.set(d.id,{...x,id:d.id})});people=n;gotP=true;loaded=true;if(selected&&!people.has(selected))selected=null;
     const keepOrbit=view==='orbit'&&builtFor==='orbit';render();if(keepOrbit&&!orbitRAF&&!reduce)drawOrbit()},
     err=>status(err&&err.code==='revoked'?'Access to your sphere ended for this view.':'Live updates stopped. Reload the page to reconnect.'));
 })();
