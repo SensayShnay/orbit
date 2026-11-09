@@ -6,6 +6,7 @@ window.orbitSB=sb;
 let uid=null, readyRes; const ready=new Promise(r=>readyRes=r);
 const BLOB_BASE=()=>`${C.url}/storage/v1/object/public/photos/${uid}/`;
 window.ORBIT_BLOB=id=>BLOB_BASE()+id+'.jpg';
+window.ORBIT_USER_PHOTO=(u,id)=>id&&u?`${C.url}/storage/v1/object/public/photos/${u}/${id}.jpg`:'';
 
 // ---------- sign in and first-run setup (src/onboard.js) ----------
 const whenDom=f=>document.readyState==='loading'?document.addEventListener('DOMContentLoaded',f):f();

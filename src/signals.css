@@ -71,3 +71,4 @@
 .sg-view .sg-ghost{border-color:rgba(255,255,255,.3)}
 .sg-toast{position:fixed;left:50%;bottom:calc(100px + env(safe-area-inset-bottom,0px));transform:translateX(-50%) translateY(20px);opacity:0;z-index:10030;background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:20px;font:500 14px var(--body);transition:.2s;pointer-events:none}
 .sg-toast.on{opacity:1;transform:translateX(-50%)}
+.sg-who{display:flex;align-items:center;gap:10px}.sg-who .sg-av{border:0}

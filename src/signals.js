@@ -19,15 +19,15 @@ async function load(force){if(busy||(!force&&Date.now()-lastLoad<20000))return;b
     if(need.length){const {data}=await sb().storage.from('signals').createSignedUrls(need,3600);(data||[]).forEach(d=>{if(d.signedUrl)urls[d.path]=d.signedUrl})}
     lastLoad=Date.now();paint()}catch(e){console.error('signals',e)}finally{busy=false}}
 
-function avatar(name,id,size){return `<span class="sg-av" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px;background:hsl(${hue(id)} 45% 55%)">${esc(ini(name))}</span>`}
+function avatar(name,id,size,photo){const u=photo&&window.ORBIT_USER_PHOTO?ORBIT_USER_PHOTO(id,photo):'';if(u)return `<img class="sg-av" src="${esc(u)}" alt="" style="width:${size}px;height:${size}px;object-fit:cover">`;return `<span class="sg-av" style="width:${size}px;height:${size}px;font-size:${Math.round(size*.36)}px;background:hsl(${hue(id)} 45% 55%)">${esc(ini(name))}</span>`}
 function paint(){const el=document.getElementById('signalRow');if(!el)return;
   const mine=feed.find(g=>g.me),others=feed.filter(g=>!g.me),pending=conns.filter(c=>c.status==='pending'&&c.direction==='in').length,connected=conns.filter(c=>c.status==='accepted').length;
   el.innerHTML=`<section class="sg-row" aria-label="Signals">
    <div class="sg-head"><h2>Signals</h2><button type="button" class="sg-conn" data-sg="conns" aria-label="Connections${pending?`, ${pending} new request${pending>1?'s':''}`:''}"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8v6M14 11h6"/></svg>${connected?`<span>${connected}</span>`:''}${pending?`<i>${pending}</i>`:''}</button></div>
    <div class="sg-strip">
-    <button type="button" class="sg-item" data-sg="${mine?'view':'compose'}" data-uid="${mine?esc(me):''}"><span class="sg-ring ${mine?'seen':'none'}">${avatar(mine?mine.name:'You',me||'me',58)}</span>${mine?'':'<b class="sg-plus">+</b>'}<small>${mine?'Your signal':'Add signal'}</small></button>
+    <button type="button" class="sg-item" data-sg="${mine?'view':'compose'}" data-uid="${mine?esc(me):''}"><span class="sg-ring ${mine?'seen':'none'}">${avatar(mine?mine.name:((window.orbitMe&&orbitMe().name)||'You'),me||'me',58,mine?mine.photo:(window.orbitMe&&orbitMe().photo))}</span>${mine?'':'<b class="sg-plus">+</b>'}<small>${mine?'Your signal':'Add signal'}</small></button>
     ${mine?`<button type="button" class="sg-item" data-sg="compose"><span class="sg-ring none"><span class="sg-av sg-addav">+</span></span><small>Add</small></button>`:''}
-    ${others.map(g=>`<button type="button" class="sg-item" data-sg="view" data-uid="${esc(g.user_id)}"><span class="sg-ring ${g.unseen?'new':'seen'}">${avatar(g.name,g.user_id,58)}</span><small>${esc(g.short)}</small></button>`).join('')}
+    ${others.map(g=>`<button type="button" class="sg-item" data-sg="view" data-uid="${esc(g.user_id)}"><span class="sg-ring ${g.unseen?'new':'seen'}">${avatar(g.name,g.user_id,58,g.photo)}</span><small>${esc(g.short)}</small></button>`).join('')}
     ${!others.length?`<div class="sg-empty">${connected?'No signals from your people right now.':'Connect with friends on Orbit to see their signals here.'}<button type="button" data-sg="conns">${connected?'Connections':'Connect or invite'}</button></div>`:''}
    </div></section>`}
 
@@ -70,7 +70,7 @@ function show(){clearTimeout(V&&V.t);const g=feed[V.gi],s=g&&g.signals[V.i];if(!
   let el=document.getElementById('sgView');if(!el){el=document.createElement('div');el.id='sgView';el.className='sg-view';el.setAttribute('role','dialog');el.setAttribute('aria-modal','true');document.body.appendChild(el)}
   const b=BGS.find(x=>x[0]===s.bg)||BGS[0];
   el.innerHTML=`<div class="sg-bars">${g.signals.map((x,k)=>`<i class="${k<V.i?'done':k===V.i?'now':''}" style="--d:${s.kind==='photo'?7:6}s"></i>`).join('')}</div>
-   <div class="sg-vhead">${avatar(g.name,g.user_id,36)}<div><b>${g.me?'Your signal':esc(g.name)}</b><small>${ago(s.created_at)} · ${left(s.expires_at)}</small></div><button type="button" class="sg-x" data-v="close" aria-label="Close">✕</button></div>
+   <div class="sg-vhead">${avatar(g.name,g.user_id,36,g.photo)}<div><b>${g.me?'Your signal':esc(g.name)}</b><small>${ago(s.created_at)} · ${left(s.expires_at)}</small></div><button type="button" class="sg-x" data-v="close" aria-label="Close">✕</button></div>
    <div class="sg-stage" data-v="tap">${s.kind==='photo'?`<img src="${esc(urls[s.photo_path]||'')}" alt="${esc(s.body||'Photo signal')}">${s.body?`<p class="sg-cap">${esc(s.body)}</p>`:''}`:`<div class="sg-textcard" style="background:${b[0]};color:${b[1]}"><p>${esc(s.body)}</p></div>`}</div>
    <div class="sg-foot">${g.me?`<button type="button" class="sg-seen" data-v="seen">Seen by ${s.views?s.views.length:0}${s.views&&s.views.some(v=>v.reaction)?' · '+s.views.filter(v=>v.reaction).map(v=>v.reaction).join(''):''}</button><button type="button" class="sg-ghost" data-v="del">Delete</button>`
      :`<div class="sg-reacts">${REACTS.map(r=>`<button type="button" data-react="${r}" aria-label="React ${r}" aria-pressed="${s.my_reaction===r}">${r}</button>`).join('')}</div><button type="button" class="sg-ghost" data-v="more" aria-label="More options">⋯</button>`}</div>`;
@@ -87,7 +87,7 @@ document.addEventListener('click',async e=>{const v=document.getElementById('sgV
   const a=t.dataset.v;
   if(a==='close')return closeView();
   if(a==='tap'){const x=e.clientX/window.innerWidth;x<.3?prev():next();return}
-  if(a==='seen'){clearTimeout(V.t);sheet(`<div class="sg-top"><h3>Seen by ${s.views.length}</h3><button type="button" class="sg-x" data-sg="close" aria-label="Close">✕</button></div>${s.views.length?`<ul class="sg-list">${s.views.map(w=>`<li><span>${esc(w.name)}</span><span>${w.reaction?esc(w.reaction)+' ':''}<small>${ago(w.at)}</small></span></li>`).join('')}</ul>`:'<p class="sg-note">Nobody yet.</p>'}`,'sg-top-layer');return}
+  if(a==='seen'){clearTimeout(V.t);sheet(`<div class="sg-top"><h3>Seen by ${s.views.length}</h3><button type="button" class="sg-x" data-sg="close" aria-label="Close">✕</button></div>${s.views.length?`<ul class="sg-list">${s.views.map(w=>`<li><span class="sg-who">${avatar(w.name,w.user_id||w.name,34,w.photo)}${esc(w.name)}</span><span>${w.reaction?esc(w.reaction)+' ':''}<small>${ago(w.at)}</small></span></li>`).join('')}</ul>`:'<p class="sg-note">Nobody yet.</p>'}`,'sg-top-layer');return}
   if(a==='del'){clearTimeout(V.t);if(!confirm('Delete this signal?')){show();return}if(s.photo_path)await sb().storage.from('signals').remove([s.photo_path]);await sb().from('signals').delete().eq('id',s.id);toast('Signal deleted');closeView();load(true);return}
   if(a==='more'){clearTimeout(V.t);const d=sheet(`<div class="sg-top"><h3>${esc(g.name)}</h3><button type="button" class="sg-x" data-sg="close" aria-label="Close">✕</button></div>
      <button type="button" class="sg-row-btn" id="sgReport">Report this signal</button><button type="button" class="sg-row-btn danger" id="sgBlock">Block ${esc(g.short)}</button>
@@ -100,9 +100,9 @@ document.addEventListener('click',async e=>{const v=document.getElementById('sgV
 function connsSheet(){const inc=conns.filter(c=>c.status==='pending'&&c.direction==='in'),out=conns.filter(c=>c.status==='pending'&&c.direction==='out'),ok=conns.filter(c=>c.status==='accepted');
   const d=sheet(`<div class="sg-top"><h3>Connections</h3><button type="button" class="sg-x" data-sg="close" aria-label="Close">✕</button></div>
    <form class="sg-connect" id="sgReq"><label for="sgWho">Connect with someone on Orbit</label><div><input id="sgWho" class="sg-input" placeholder="Their email or invite code" autocomplete="off" autocapitalize="off"><button type="submit">Send</button></div><p class="sg-msg" role="status"></p></form>
-   ${inc.length?`<h4>Requests</h4><ul class="sg-list">${inc.map(c=>`<li><span>${esc(c.name)}</span><span class="sg-acts"><button type="button" data-acc="${esc(c.user_id)}" class="sg-mini primary">Accept</button><button type="button" data-dec="${esc(c.user_id)}" class="sg-mini">Decline</button></span></li>`).join('')}</ul>`:''}
-   <h4>Connected <small>${ok.length}</small></h4>${ok.length?`<ul class="sg-list">${ok.map(c=>`<li><span>${esc(c.name)}${c.source==='invite'?' <small>joined with an invite</small>':''}</span><span class="sg-acts"><button type="button" data-rm="${esc(c.user_id)}" class="sg-mini">Remove</button></span></li>`).join('')}</ul>`:'<p class="sg-note">Nobody yet. Friends who join with your invite code connect automatically.</p>'}
-   ${out.length?`<h4>Waiting on them</h4><ul class="sg-list">${out.map(c=>`<li><span>${esc(c.name)}</span><small>Request sent</small></li>`).join('')}</ul>`:''}
+   ${inc.length?`<h4>Requests</h4><ul class="sg-list">${inc.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34,c.photo)}${esc(c.name)}</span><span class="sg-acts"><button type="button" data-acc="${esc(c.user_id)}" class="sg-mini primary">Accept</button><button type="button" data-dec="${esc(c.user_id)}" class="sg-mini">Decline</button></span></li>`).join('')}</ul>`:''}
+   <h4>Connected <small>${ok.length}</small></h4>${ok.length?`<ul class="sg-list">${ok.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34,c.photo)}${esc(c.name)}${c.source==='invite'?' <small>joined with an invite</small>':''}</span><span class="sg-acts"><button type="button" data-rm="${esc(c.user_id)}" class="sg-mini">Remove</button></span></li>`).join('')}</ul>`:'<p class="sg-note">Nobody yet. Friends who join with your invite code connect automatically.</p>'}
+   ${out.length?`<h4>Waiting on them</h4><ul class="sg-list">${out.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34,c.photo)}${esc(c.name)}</span><small>Request sent</small></li>`).join('')}</ul>`:''}
    <button type="button" class="sg-ghost wide" data-orbit="invite">Invite someone new</button>`,'');
   d.querySelector('#sgReq').onsubmit=async e=>{e.preventDefault();const v=d.querySelector('#sgWho').value.trim(),m=d.querySelector('#sgReq .sg-msg');if(!v)return;
     const r=await sb().rpc('request_connection',v.includes('@')?{p_email:v}:{p_code:v});const x=r.data||{};
@@ -118,5 +118,6 @@ document.addEventListener('click',e=>{const t=e.target.closest('[data-sg]');if(!
 new MutationObserver(()=>{const el=document.getElementById('signalRow');if(el&&!el.firstChild){paint();load(false)}}).observe(document.body,{childList:true,subtree:true});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)load(true)});
 setInterval(()=>{if(!document.hidden&&document.getElementById('signalRow'))load(true)},90000);
+window.addEventListener('orbit-me',()=>{paint();load(true)});
 window.claude.use('db').then(()=>load(true));
 })();
