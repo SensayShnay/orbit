@@ -66,6 +66,7 @@ h1,h2,h3{font-family:var(--display);font-weight:700;letter-spacing:-.015em;text-
 .top h1{font-size:30px;line-height:1.05}
 .top .sub{color:var(--muted);font-size:14px;margin-top:3px}
 .top .sp{flex:1}
+body[data-view="home"] .top{display:none}
 .ibtn{width:40px;height:40px;display:grid;place-items:center;border:1px solid var(--line);background:var(--surface);border-radius:12px;color:var(--ink)}
 .ibtn:hover{border-color:var(--line2)}
 .ibtn svg{width:19px;height:19px}
@@ -842,7 +843,7 @@ function setView(v){
   $('tabMore').setAttribute('aria-current',['sug','long','outer','mem','wrapped'].includes(v)?'page':'false');
   $('menu').hidden=true; window.scrollTo(0,0); render();
 }
-function render(){
+function render(){document.body.dataset.view=view;
   renderCounts();
   const [t,s]=TITLES[view]; $('viewTitle').textContent=t;
   if(view==='home'){$('viewTitle').textContent=greeting();$('viewSub').textContent=NOW.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}
