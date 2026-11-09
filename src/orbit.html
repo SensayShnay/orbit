@@ -401,6 +401,12 @@ details.more .inner{padding-bottom:14px}
 .ap-circ button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
 .ap-msg{margin:0!important;min-height:1em;font-size:13.5px;color:var(--danger);text-align:center}
 .cmodal-acts .btn.primary:disabled{opacity:.45}
+.cropbox{max-width:380px}.cropbox p{margin:0 0 14px}
+.cropstage{position:relative;width:100%;aspect-ratio:1;border-radius:14px;overflow:hidden;background:#000;touch-action:none}
+.cropstage canvas{width:100%;height:100%;display:block;touch-action:none;cursor:grab}
+.cropmask{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle closest-side,transparent 84%,rgba(0,0,0,.55) 84.6%)}
+.cropmask::after{content:"";position:absolute;inset:8%;border-radius:50%;border:2px solid rgba(255,255,255,.85)}
+.cropzoom{width:100%;margin:14px 0 16px;accent-color:var(--accent)}
 @keyframes cmfade{from{opacity:0}to{opacity:1}}
 
 /* ---------- palette, menu, toast ---------- */
@@ -1560,6 +1566,36 @@ async function runDraft(){
 function openDraft(id){if(draft.id!==id){draft={id,open:true,tone:'',angle:'',text:'',busy:false,ctl:null,note:''};const p=people.get(id);if(p)draft.tone=defaultTone(p)}else draft.open=true}
 
 // ---------- photos ----------
+// Crop a photo to a circle before saving: drag to move, pinch or use the slider to zoom. Resolves a 480px JPEG, or null if cancelled.
+function cropPhoto(file){return new Promise(resolve=>{const url=URL.createObjectURL(file);const img=new Image();
+  img.onerror=()=>{URL.revokeObjectURL(url);resolve(undefined)};
+  img.onload=()=>{const m=document.createElement('div');m.className='cmodal';m.id='cropModal';
+    m.innerHTML=`<div class="cmodal-box cropbox" role="dialog" aria-modal="true" aria-labelledby="cropT"><h3 id="cropT">Crop photo</h3><p>Drag to move. Pinch or slide to zoom.</p>
+      <div class="cropstage"><canvas width="600" height="600"></canvas><div class="cropmask" aria-hidden="true"></div></div>
+      <input type="range" class="cropzoom" min="1" max="4" step="0.01" value="1" aria-label="Zoom">
+      <div class="cmodal-acts"><button class="btn" type="button" data-crop="no">Cancel</button><button class="btn primary" type="button" data-crop="ok">Use photo</button></div></div>`;
+    document.body.appendChild(m);
+    const cv=m.querySelector('canvas'),ctx=cv.getContext('2d'),N=600,R=N*0.42,base=(2*R)/Math.min(img.naturalWidth,img.naturalHeight);
+    let z=1,x=N/2,y=N/2;const zr=m.querySelector('.cropzoom');
+    const clamp=()=>{const w=img.naturalWidth*base*z/2,h=img.naturalHeight*base*z/2;x=Math.min(N/2-R+w,Math.max(N/2+R-w,x));y=Math.min(N/2-R+h,Math.max(N/2+R-h,y))};
+    const draw=()=>{clamp();ctx.fillStyle='#000';ctx.fillRect(0,0,N,N);const w=img.naturalWidth*base*z,h=img.naturalHeight*base*z;ctx.drawImage(img,x-w/2,y-h/2,w,h)};
+    const setZ=(nz,cx=N/2,cy=N/2)=>{nz=Math.min(4,Math.max(1,nz));x=cx+(x-cx)*nz/z;y=cy+(y-cy)*nz/z;z=nz;zr.value=z;draw()};
+    const pts=new Map();let last=null,pinch0=null;const scale=()=>N/cv.getBoundingClientRect().width;
+    const pos=e=>{const r=cv.getBoundingClientRect(),k=scale();return [(e.clientX-r.left)*k,(e.clientY-r.top)*k]};
+    cv.addEventListener('pointerdown',e=>{cv.setPointerCapture(e.pointerId);pts.set(e.pointerId,pos(e));last=pos(e);if(pts.size===2){const [a,b]=[...pts.values()];pinch0={d:Math.hypot(a[0]-b[0],a[1]-b[1]),z}}});
+    cv.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;const p=pos(e);pts.set(e.pointerId,p);
+      if(pts.size>=2&&pinch0){const [a,b]=[...pts.values()];setZ(pinch0.z*Math.hypot(a[0]-b[0],a[1]-b[1])/pinch0.d,(a[0]+b[0])/2,(a[1]+b[1])/2)}
+      else if(pts.size===1&&last){x+=p[0]-last[0];y+=p[1]-last[1];draw()}last=p});
+    const up=e=>{pts.delete(e.pointerId);pinch0=null;last=pts.size?[...pts.values()][0]:null};cv.addEventListener('pointerup',up);cv.addEventListener('pointercancel',up);
+    cv.addEventListener('wheel',e=>{e.preventDefault();setZ(z*(e.deltaY<0?1.08:1/1.08),...pos(e))},{passive:false});
+    zr.addEventListener('input',()=>setZ(+zr.value));
+    const done=v=>{m.remove();URL.revokeObjectURL(url);resolve(v)};
+    m.addEventListener('click',e=>{const b=e.target.closest('[data-crop]');if(!b)return;if(b.dataset.crop==='no')return done(null);
+      const out=document.createElement('canvas');out.width=out.height=Math.min(480,Math.round(Math.min(img.naturalWidth,img.naturalHeight)*Math.max(1,z)));
+      const k=out.width/(2*R),w=img.naturalWidth*base*z,h=img.naturalHeight*base*z;out.getContext('2d').drawImage(img,(x-w/2-(N/2-R))*k,(y-h/2-(N/2-R))*k,w*k,h*k);
+      out.toBlob(b2=>done(b2),'image/jpeg',.88)});
+    draw()};
+  img.src=url})}
 async function shrink(file){
   const url=URL.createObjectURL(file);
   try{const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=rej;i.src=url});
@@ -1569,16 +1605,15 @@ async function shrink(file){
   finally{URL.revokeObjectURL(url)}
 }
 async function setMyPhoto(file){
-  if(!assetsNs)return;toast('Uploading…');
-  try{const blob=await shrink(file).catch(()=>file);const r=await assetsNs.upload(blob,{type:'image/jpeg'});const old=SET.profile.photo;SET.profile.photo=r.id;saveSettings();
+  if(!assetsNs)return;
+  try{let blob=await cropPhoto(file);if(blob===null)return;toast('Uploading…');if(!blob)blob=await shrink(file).catch(()=>file);const r=await assetsNs.upload(blob,{type:'image/jpeg'});const old=SET.profile.photo;SET.profile.photo=r.id;saveSettings();
     if(old&&old!==r.id)assetsNs.delete(old).catch(()=>{});if(view==='settings')renderSettings();window.dispatchEvent(new Event('orbit-me'))}
   catch(e){status('Couldn’t upload that photo just now.')}
 }
 window.orbitMe=()=>SET.profile;
 async function setPhoto(id,file){
   const p=people.get(id);if(!p||!assetsNs)return;
-  toast('Uploading…');
-  try{const blob=await shrink(file).catch(()=>file);const r=await assetsNs.upload(blob,{type:'image/jpeg'});const old=p.photo;save(id,{photo:r.id});
+  try{let blob=await cropPhoto(file);if(blob===null)return;toast('Uploading…');if(!blob)blob=await shrink(file).catch(()=>file);const r=await assetsNs.upload(blob,{type:'image/jpeg'});const old=p.photo;save(id,{photo:r.id});
     if(old&&old!==r.id)assetsNs.delete(old).catch(()=>{});toast('Photo saved')}
   catch(e){status(e&&e.code==='too_large'?'That photo is too big. Try a smaller one.':e&&e.code==='unsupported_type'?'That file type isn’t supported. Try a JPEG or PNG.':'Couldn’t upload that photo just now.')}
 }
@@ -1823,8 +1858,8 @@ document.addEventListener('click',async e=>{
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='actBox')actOpen=e.target.open},true);
 document.addEventListener('input',e=>{if(e.target.id==='dAngle')draft.angle=e.target.value;else if(e.target.id==='dOut'&&!draft.busy)draft.text=e.target.value});
 document.addEventListener('change',e=>{
-  if(e.target.id==='photoIn'){const f=e.target.files&&e.target.files[0];if(f&&selected)setPhoto(selected,f);return}
-  if(e.target.id==='mePhotoIn'){const f=e.target.files&&e.target.files[0];if(f)setMyPhoto(f);return}
+  if(e.target.id==='photoIn'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f&&selected)setPhoto(selected,f);return}
+  if(e.target.id==='mePhotoIn'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)setMyPhoto(f);return}
   if(e.target.id==='mergeSel'){mergeFrom=e.target.value||null;lastRenderedId=null;renderDetail();return}
   if(e.target.id==='linkSel'){const v=e.target.value;if(v&&selected)setLink(selected,v,true);return}
   const k=e.target.dataset.k;if(!k||!selected)return;let v=e.target.value.trim();if(k==='yearMet')v=v?+v:'';
