@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Orbit Message Sync</title>
+<style>:root{--bg:#FBFAF7;--ink:#1A1830;--muted:#5E5B72;--line:#E7E3DA;--accent:#B07A1E;--soft:#F3EEE3}@media (prefers-color-scheme:dark){:root{--bg:#14131C;--ink:#F2F0EA;--muted:#A9A6B8;--line:#2A2838;--accent:#E9B44C;--soft:#211F2B}}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif}main{max-width:680px;margin:0 auto;padding:48px 20px 80px}h1{font-size:34px;line-height:1.15;margin:0 0 8px}h2{font-size:21px;margin:36px 0 8px}.muted{color:var(--muted)}a{color:var(--accent)}ol,ul{padding-left:22px}li{margin:6px 0}
+.box{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:16px 18px;margin:16px 0}code{font:14px ui-monospace,SFMono-Regular,Menlo,monospace;background:var(--soft);padding:2px 6px;border-radius:6px;word-break:break-all}</style></head>
+<body><main>
+<h1>Message sync</h1><p class="muted">An optional helper for your Mac that tells Orbit when you last talked to someone.</p>
+<div class="box"><b>The short version:</b> it reads <b>who</b> you messaged and <b>when</b>. It never reads, stores or sends <b>what</b> anyone said.</div>
+<h2>What it reads</h2>
+<ul><li>From Messages on your Mac (iMessage and SMS): for each 1-on-1 conversation, the phone number or email, the date of each message, and whether you or they sent it.</li>
+<li>From WhatsApp for Mac, if it's installed: the same three things.</li>
+<li>Group chats are skipped.</li></ul>
+<h2>What it sends</h2>
+<p>Before counting, it asks your Orbit for the phone numbers and emails of the people already in your sphere. It only sends numbers for those people: how many messages, how many you sent, the first and last date, and a count per month and year. Everyone else stays on your Mac and is never sent anywhere.</p>
+<h2>What it never does</h2>
+<ul><li>Read message text, photos, attachments or reactions.</li><li>Send anything about people who aren't in your Orbit.</li><li>Change or delete anything in Messages. It reads a copy and throws the copy away.</li></ul>
+<h2>Setting it up</h2>
+<ol><li>In Orbit, go to <b>Settings</b>, then <b>Message sync</b>, then <b>Set up on my Mac</b>.</li>
+<li>Copy the line it gives you and get it onto your Mac (copy and paste works across your devices, or AirDrop it).</li>
+<li>On the Mac, open <b>Terminal</b> (press ⌘ Space, type Terminal, press Return), paste the line and press Return.</li>
+<li>It opens <b>System Settings › Privacy &amp; Security › Full Disk Access</b> and shows you <b>Orbit Message Sync</b> in Finder. Drag it into the list and switch it on. macOS needs this permission for any app to read Messages.</li>
+<li>Press Return in Terminal. It syncs once right away, then twice a day (10:15 and 20:15) whenever the Mac is on.</li></ol>
+<p>Settings in Orbit shows when it last synced, or warns you if the Mac lost permission.</p>
+<h2>Turning it off</h2>
+<p>In Orbit, tap <b>Settings › Message sync › Turn off</b>. The Mac can no longer send anything. To remove the helper from the Mac too, paste this into Terminal:</p>
+<p><code>curl -fsSL "https://mpjqxzsdjwmsfmselztl.supabase.co/functions/v1/orbit-sync?get=uninstall" | bash</code></p>
+<p>Then remove Orbit Message Sync from Full Disk Access (select it and click −).</p>
+<h2>Want to check the code?</h2>
+<p>It's a short script you can read: <a href="https://github.com/SensayShnay/orbit/blob/main/tools/mac/sync.sh">sync.sh</a> and the <a href="https://github.com/SensayShnay/orbit/blob/main/tools/mac/install.sh">installer</a>.</p>
+<p class="muted" style="margin-top:40px"><a href="privacy.html">Privacy Policy</a></p>
+</main></body></html>

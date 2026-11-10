@@ -61,5 +61,5 @@ if [ ! -s "$TMP/stats.json" ]; then status false read_error; echo "$(date) Could
 PEOPLE="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload'));" 2>/dev/null)"
 
 # 4. Send the counts to your Orbit.
-if post "$TMP/stats.json" > "$TMP/out.json"; then status true synced "${PEOPLE:-0}"; echo "$(date) Synced ${PEOPLE:-0} people."
+if post "$TMP/stats.json" > "$TMP/out.json"; then status true synced "${PEOPLE:-0}"; [ "${PEOPLE:-0}" = 1 ] && W=person || W=people; echo "$(date) Synced ${PEOPLE:-0} $W."
 else status false send_error; echo "$(date) Couldn't send to Orbit."; exit 6; fi
