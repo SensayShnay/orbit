@@ -80,10 +80,10 @@ function next(){const g=feed[V.gi];if(V.i<g.signals.length-1){V.i++;show()}else 
 function prev(){if(V.i>0){V.i--;show()}}
 function closeView(){if(V)clearTimeout(V.t);V=null;const el=document.getElementById('sgView');if(el)el.remove();paint()}
 document.addEventListener('click',async e=>{const v=document.getElementById('sgView');if(!v||!v.contains(e.target))return;const t=e.target.closest('[data-v],[data-react]');if(!t)return;
-  const g=feed[V.gi],s=g.signals[V.i];
+  if(!V)return;const g=feed[V.gi],s=g&&g.signals[V.i];if(!s)return;
   if(t.dataset.react){clearTimeout(V.t);const r=t.dataset.react,same=s.my_reaction===r;s.my_reaction=same?null:r;
     if(same)await sb().from('signal_reactions').delete().eq('signal_id',s.id);else await sb().from('signal_reactions').upsert({signal_id:s.id,emoji:r});
-    toast(same?'Reaction removed':'Sent '+r);show();return}
+    toast(same?'Reaction removed':'Sent '+r);if(V)show();return}
   const a=t.dataset.v;
   if(a==='close')return closeView();
   if(a==='tap'){const x=e.clientX/window.innerWidth;x<.3?prev():next();return}
@@ -106,9 +106,13 @@ function connsSheet(){const inc=conns.filter(c=>c.status==='pending'&&c.directio
    <button type="button" class="sg-ghost wide" data-orbit="invite">Invite someone new</button>`,'');
   d.querySelector('#sgReq').onsubmit=async e=>{e.preventDefault();const v=d.querySelector('#sgWho').value.trim(),m=d.querySelector('#sgReq .sg-msg');if(!v)return;
     const r=await sb().rpc('request_connection',v.includes('@')?{p_email:v}:{p_code:v});const x=r.data||{};
-    m.textContent=r.error?'Something went wrong. Try again.':!x.ok?(x.reason==='self'?'That’s you.':'Nobody on Orbit with that email or code yet. Send them an invite.'):x.status==='accepted'?`You’re connected with ${x.name}.`:`Request sent to ${x.name}. They need to accept.`;
+    m.textContent=r.error?'Something went wrong. Try again.':!x.ok?(x.reason==='self'?'That’s you.':x.reason==='slow_down'?'That’s a lot of requests for one day. Try again tomorrow.':'Nobody on Orbit with that email or code yet. Send them an invite.'):x.status==='accepted'?`You’re connected with ${x.name}.`:`Request sent to ${x.name}. They need to accept.`;
     if(x.ok){await load(true);setTimeout(connsSheet,1200)}};
-  d.addEventListener('click',async e=>{const a=e.target.closest('[data-acc],[data-dec],[data-rm]');if(!a)return;const id=a.dataset.acc||a.dataset.dec||a.dataset.rm;
+  sb().rpc('my_blocks').then(r=>{const bl=(r&&r.data)||[];if(!bl.length||!document.body.contains(d))return;const w=document.createElement('div');
+    w.innerHTML=`<h4>Blocked <small>${bl.length}</small></h4><ul class="sg-list">${bl.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34)}${esc(c.name)}</span><span class="sg-acts"><button type="button" data-unb="${esc(c.user_id)}" class="sg-mini">Unblock</button></span></li>`).join('')}</ul>`;
+    d.querySelector('.sg-panel').appendChild(w)},()=>{});
+  d.addEventListener('click',async e=>{const u=e.target.closest('[data-unb]');if(u){u.disabled=true;await sb().rpc('unblock_user',{p_other:u.dataset.unb});toast('Unblocked. Send a request to connect again');connsSheet();return}
+    const a=e.target.closest('[data-acc],[data-dec],[data-rm]');if(!a)return;const id=a.dataset.acc||a.dataset.dec||a.dataset.rm;
     if(a.dataset.rm&&!confirm('Remove this connection? You’ll stop seeing each other’s signals.'))return;
     await sb().rpc('respond_connection',{p_other:id,p_accept:!!a.dataset.acc});toast(a.dataset.acc?'Connected':'Done');await load(true);connsSheet()})}
 

@@ -412,6 +412,8 @@ details.more .inner{padding-bottom:14px}
 .bandbox{max-width:440px;max-height:82vh;display:flex;flex-direction:column;text-align:left}.bandtop{display:flex;justify-content:space-between;align-items:center}.bandtop h3{margin:0}.bandbox>p{margin:4px 0 12px}
 .bandlist{overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin:0 -4px;padding:0 4px}.bandlist .pc{width:100%}
 .bands .stat{text-align:left;cursor:pointer;font:inherit;color:inherit}.bands .stat:active{transform:scale(.98)}
+.ap-full{margin:0!important;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink)!important;font-size:13.5px;line-height:1.4;text-align:left!important}.ap-full.soft{background:var(--surface2);color:var(--muted)!important}
+.ap-circ button:disabled{opacity:.4}
 @keyframes cmfade{from{opacity:0}to{opacity:1}}
 
 /* ---------- palette, menu, toast ---------- */
@@ -641,7 +643,10 @@ details.more .inner{padding-bottom:14px}
 </script>
 <script>
 (function(){
-const NOW=new Date(), TODAY=NOW.toISOString().slice(0,10), THIS_YEAR=NOW.getFullYear();
+const isoLocal=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const NOW=new Date(), TODAY=isoLocal(NOW), THIS_YEAR=NOW.getFullYear();
+// The app can sit open for days on a phone. When it comes back on a new day, reload so "today" is right.
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&isoLocal(new Date())!==TODAY)location.reload()});
 const ORBIT='Long Orbit', MEM='In memory', OUTER='Outer Orbit';
 const ROLES=['Cleaner','Contractor','Client','Tenant','Work'];
 const HV=['hudson valley','kingston','woodstock','rhinebeck','rhinecliff','milan','red hook','saugerties','hudson','new paltz','poughkeepsie','catskill','cairo','accord','stone ridge','phoenicia','tivoli','hurley','beacon','millbrook','kerhonkson','germantown','pine plains','high falls','marbletown','rosendale','olivebridge','west hurley','bearsville','shokan','boiceville','ellenville','gardiner','rhinebeck area','upstate','hyde park','staatsburg','clinton corners','ancram','claverack','chatham','athens','coxsackie','tannersville','hunter','windham','livingston manor','narrowsburg','callicoon','newburgh','cold spring','nyack','peekskill','fishkill','wappingers falls','esopus','port ewen','lagrangeville','amenia','pleasant valley','red hook area','roxbury','margaretville','delhi','krumville','kripplebush'];
@@ -710,7 +715,7 @@ function myHdHTML(){const P=SET.profile,z=signOf(P.birthday),ch=hdChart(P.birthd
   ${au?`<p class="hdp"><b>${esc(P.hdAuthority)} authority.</b> ${esc(au.replace(/\bthem\b/g,'you').replace(/\bthey\b/g,'you').replace(/\btheir\b/g,'your').replace(/^Don’t push decisions/,'Don’t rush decisions').replace(/^Ask simple/,'Answer simple').replace(/^Let you talk/,'Talk'))}</p>`:''}
   <p class="hint">${P.birthTime&&P.birthPlace?'Got your time and place. Plug them into any free Human Design calculator to confirm type, authority and profile, then set them above.':'Gates come from your birthday alone. Add your birth time and place, then use any free Human Design calculator to get your type and authority.'}</p></div>`}
 let remindOpen=false;
-const remAdd=(base,n)=>{const d=new Date(base+'T12:00:00');d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)};
+const remAdd=(base,n)=>{const d=new Date(base+'T12:00:00');d.setDate(d.getDate()+n);return isoLocal(d)};
 const REMIND_OPTS=[[14,'Every 2 weeks'],[30,'Monthly'],[91,'Every 3 months'],[182,'Every 6 months'],[365,'Yearly']];
 function remindSuggest(p){if(p.circle==='Family')return 30;if(isInner(p)||p.layer==='inner')return 14;if(p.layer==='close')return 30;if(!isActive(p))return 365;return 91}
 function remindDue(p){const r=p.remind;if(!r)return null;let d=null;if(r.date)d=r.date;else if(r.every)d=remAdd(lastSeen(p)||r.setAt||TODAY,r.every);if(d&&r.snooze&&r.snooze>d)d=r.snooze;return d}
@@ -738,7 +743,7 @@ function kidsRefresh(){const b=$('kidsBox');if(b&&selected)b.outerHTML=kidsHTML(
 document.addEventListener('toggle',e=>{if(e.target&&e.target.id==='kidsBox')kidsOpen=e.target.open},true);
 document.addEventListener('change',e=>{const k=e.target.dataset&&e.target.dataset.kid;if(!k||!selected)return;const [i,f]=k.split('.');const p=people.get(selected);const ks=(p.kids||[]).map(x=>({...x}));if(!ks[i])return;ks[i][f]=e.target.value.trim();save(selected,{kids:ks},true);kidsRefresh()});
 document.addEventListener('click',e=>{const a=e.target.closest('[data-act="kidadd"],[data-act="kiddel"]');if(!a||!selected)return;const p=people.get(selected);let ks=(p.kids||[]).map(x=>({...x}));if(a.dataset.act==='kidadd')ks.push({name:'',birthday:'',notes:''});else ks.splice(+a.dataset.i,1);kidsOpen=true;save(selected,{kids:ks},true);kidsRefresh();if(a.dataset.act==='kidadd'){const n=$('kid-'+(ks.length-1)+'-name');n&&n.focus()}});
-let hdOpen=false;window.__dbg=()=>({SET,people});
+let hdOpen=false;
 function hdHTML(p){const z=zodiac(p),ch=hdChart(p.birthday),ty=HD_TYPES[p.hdType],au=HD_AUTH[p.hdAuthority],si=z&&SIGN_INFO[z[0]];
   const g=x=>`<b>${x.gate}.${x.line}</b> ${esc(HD_GATES[x.gate])}`;
   const sel=(k,label,opts)=>`<div class="fld"><label for="hd-${k}">${label}</label><select id="hd-${k}" data-hd="${k}"><option value="">Not sure yet</option>${opts.map(o=>`<option${p[k]===o?' selected':''}>${esc(o)}</option>`).join('')}</select></div>`;
@@ -823,21 +828,31 @@ function haystack(p){const pr=profiles.get(p.id);return (pr?[pr.summary,(pr.fact
 const PHOTO_RE=/^[0-9a-f]{32}$/;
 const av=(p,size='')=>`<span class="av ${size} ${circleCls(p)}" style="--h:${hash(p.id||p.first)%360}">${esc(initials(p))}${p.photo&&PHOTO_RE.test(p.photo)?`<img src="/_blob/${p.photo}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
 let DRIFT_DAYS=182, REACH_DAYS=90, BDAY_DAYS=60;
+const durTxt=n=>n>=350?(Math.round(n/365)<=1?'a year':Math.round(n/365)+' years'):n>=45?Math.round(n/30)+' months':n+' days';
 const snoozed=p=>p.driftSnooze&&p.driftSnooze>=TODAY;
 function driftList(){if(pausedUntil())return [];return [...people.values()].filter(p=>inCurrent(p)&&!snoozed(p)&&lastSeen(p)&&daysSince(lastSeen(p))>=DRIFT_DAYS).sort((a,b)=>daysSince(lastSeen(a))-daysSince(lastSeen(b))||msgCount(b)-msgCount(a))}
 const isNewDrift=p=>daysSince(lastSeen(p))<DRIFT_DAYS+8;
-function addDays(n){const d=new Date(NOW);d.setDate(d.getDate()+n);return d.toISOString().slice(0,10)}
+function addDays(n){const d=new Date(NOW);d.setDate(d.getDate()+n);return isoLocal(d)}
 function hook(p){const pr=profiles.get(p.id);if(pr&&pr.followUps&&pr.followUps[0])return 'Bring up: '+pr.followUps[0];if(p.whereMet)return 'Met '+p.whereMet+(p.yearMet?' in '+p.yearMet:'');if(p.job)return p.job;return msgCount(p)?msgCount(p).toLocaleString()+' messages together':''}
 function driftCard(p){return `<div class="drift"><button class="top2" type="button" data-id="${esc(p.id)}" style="border:0;background:none;padding:0;text-align:left;color:inherit">${av(p,'sm')}<div><div class="nm">${esc(fullName(p))}</div><div class="meta">Quiet ${esc(ago(lastSeen(p)).replace(' ago',''))} · last ${esc(lastSeen(p))}</div></div>${isNewDrift(p)?'<span class="pill new">New</span>':''}</button>
   <span class="why">${esc(hook(p))}</span>
   <div class="acts">${sample?`<button class="btn small primary" type="button" data-draftfor="${esc(p.id)}"><svg><use href="#i-wand"/></svg>Draft a text</button>`:''}<button class="btn small" type="button" data-snooze="${esc(p.id)}">Snooze 3 mo</button><button class="btn small" type="button" data-tolong="${esc(p.id)}">Outer Orbit</button></div></div>`}
 const subE=p=>[(p.city||'').replace(/Hudson Valley/g,'HV'),p.circle===OUTER&&p.role&&p.role!==p.job?p.role:'',p.job].filter(Boolean).join(' · ');
 const sub=p=>[p.circle===OUTER&&p.role&&p.role!==p.job?p.role:'',p.job,p.city].filter(Boolean).join(' · ');
-function status(msg){const b=$('statusBox');b.hidden=!msg;b.textContent=msg||''}
+let statusT;function status(msg){const b=$('statusBox');b.hidden=!msg;b.textContent=msg||'';clearTimeout(statusT);if(msg&&!/…$/.test(msg))statusT=setTimeout(()=>{b.hidden=true},8000)}
 let toastT; function toast(msg){const t=$('toast');t.textContent=msg;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(()=>t.hidden=true,1800)}
 const SYS_REDUCE=matchMedia('(prefers-reduced-motion: reduce)').matches; let reduce=SYS_REDUCE;
 function css(v){return getComputedStyle(document.documentElement).getPropertyValue(v).trim()}
 function weekRand(seed){let s=(Math.floor(NOW/6048e5)*9301+seed*49297)%233280;return ()=>{s=(s*9301+49297)%233280;return s/233280}}
+
+// ---------- the 150 limit ----------
+// Orbit holds 150 people. People kept In memory don't take a spot.
+const MAX_PEOPLE=150;
+const counted=()=>{let n=0;people.forEach(p=>{if(p.circle!==MEM)n++});return n};
+const roomLeft=()=>Math.max(0,MAX_PEOPLE-counted());
+function fullNotice(){const old=document.getElementById('fullModal');if(old)old.remove();const m=document.createElement('div');m.id='fullModal';m.className='cmodal';
+  m.innerHTML=`<div class="cmodal-box" role="alertdialog" aria-modal="true" aria-labelledby="fullT" aria-describedby="fullD"><h3 id="fullT">Your orbit is full</h3><p id="fullD">Orbit holds ${MAX_PEOPLE} people, about as many relationships as one person can really keep up with. You have ${counted()}. To add someone new, remove someone first.</p><div class="cmodal-acts" style="grid-template-columns:1fr"><button class="btn primary" type="button" data-fullok>Got it</button></div></div>`;
+  m.addEventListener('click',ev=>{if(ev.target===m||ev.target.closest('[data-fullok]'))m.remove()});document.body.appendChild(m);setTimeout(()=>{const b=m.querySelector('[data-fullok]');if(b)b.focus()},30)}
 
 // ---------- views ----------
 const TITLES={rems:['Reminders','Everyone Orbit will nudge you about'],bdays:['Birthdays','Every birthday you’ve saved, month by month'],settings:['Settings','Your profile, look, reminders and data'],map:['World map','Where your people live'],home:['Home',''],orbit:['Orbit map','Everyone you know, placed by how recently you were in touch'],people:['Everyone',''],reach:['Reach out','Who could use a hello'],sug:['Maybe add','People you message who aren’t in your sphere yet'],long:['Long Orbit','Still circling, just on a wider path'],outer:['Outer Orbit','Cleaners, contractors, clients and the people you work with'],mem:['In memory','People who have passed'],wrapped:['Orbit Wrapped','Your year in messages']};
@@ -853,7 +868,7 @@ function render(){document.body.dataset.view=view;
   renderCounts();
   const [t,s]=TITLES[view]; $('viewTitle').textContent=t;
   if(view==='home'){$('viewTitle').textContent=greeting();$('viewSub').textContent=NOW.toLocaleDateString(undefined,{weekday:'long',month:'long',day:'numeric'})}
-  else if(view==='people'){$('viewSub').textContent=`${[...people.values()].filter(isActive).length} people in your sphere`}
+  else if(view==='people'){$('viewSub').textContent=`${[...people.values()].filter(isActive).length} in your sphere · ${counted()} of ${MAX_PEOPLE} people`}
   else $('viewSub').textContent=s;
   if(!loaded){$('view').innerHTML=`<div class="empty">Opening your sphere…</div>`;return}
   if(view==='home') renderHome();
@@ -875,7 +890,7 @@ function renderCounts(){
   const dl=driftList();
   const c={people:all.length,reach:reachList().length,sug:liveSugs().length,long:all.filter(p=>p.circle===ORBIT).length,outer:all.filter(p=>p.circle===OUTER).length,inner:all.filter(isInner).length,mem:all.filter(p=>p.circle===MEM).length,drift:dl.length};
   document.querySelectorAll('[data-count]').forEach(e=>{e.textContent=c[e.dataset.count]||'';if(e.dataset.count==='drift')e.classList.toggle('alert',dl.some(isNewDrift))});
-  $('brandSub').textContent=`${c.people} people`;
+  $('brandSub').textContent=`${counted()} of ${MAX_PEOPLE} people`;
 }
 function pcard(p,line,when,cls=''){return `<button class="pc ${cls}" type="button" data-id="${esc(p.id)}"><span class="who">${av(p,'sm')}<div><div class="nm">${esc(fullName(p))}</div><div class="meta">${esc(sub(p)||p.circle||'')}</div></div></span>${line?`<span class="why">${esc(line)}</span>`:''}${when?`<span class="when">${esc(when)}</span>`:''}</button>`}
 
@@ -898,10 +913,10 @@ function renderHome(){
       <button class="stat" type="button" data-view="reach"><b>${rl.length}</b><span>could use a hello</span></button>
       <button class="stat" type="button" data-view="orbit"><b>${all.filter(isInner).length}</b><span>in your inner sphere</span></button>
     </div>
-    ${dl.length?`<div class="sh"><h3>Drift alerts</h3>${nd?`<span class="pill new">${nd} new</span>`:''}${dl.length>6?`<button class="more" type="button" data-view="reach">See all ${dl.length}</button>`:''}</div><p class="hint">People in your sphere you haven't been in touch with for six months or more. Snooze anyone you're fine leaving quiet.</p><div class="grid3">${dl.slice(0,6).map(driftCard).join('')}</div>`:''}
-    ${rl.length?`<div class="sh"><h3>Not reached in ${Math.round(REACH_DAYS/30)}+ months</h3><span class="pill">${rl.length}</span>${rl.length>12?`<button class="more" type="button" data-view="reach">See all</button>`:''}</div><div class="rail">${rl.slice(0,12).map(p=>pcard(p,'',lastSeen(p)?'Last talked '+ago(lastSeen(p)):'No contact logged yet')).join('')}</div>`:''}
+    ${dl.length?`<div class="sh"><h3>Drift alerts</h3>${nd?`<span class="pill new">${nd} new</span>`:''}${dl.length>6?`<button class="more" type="button" data-view="reach">See all ${dl.length}</button>`:''}</div><p class="hint">People in your sphere you haven't been in touch with for ${durTxt(DRIFT_DAYS)} or more. Snooze anyone you're fine leaving quiet.</p><div class="grid3">${dl.slice(0,6).map(driftCard).join('')}</div>`:''}
+    ${rl.length?`<div class="sh"><h3>Not reached in ${durTxt(REACH_DAYS)} or more</h3><span class="pill">${rl.length}</span>${rl.length>12?`<button class="more" type="button" data-view="reach">See all</button>`:''}</div><div class="rail">${rl.slice(0,12).map(p=>pcard(p,'',lastSeen(p)?'Last talked '+ago(lastSeen(p)):'No contact logged yet')).join('')}</div>`:''}
     <div class="sh"><h3>Birthdays coming up</h3></div>
-    ${bd.length?`<div class="rail">${bd.map(({p,b,kid})=>pcard(p,kid?kidLine(kid,b):'',(b.days===0?'Today 🎂':b.days===1?'Tomorrow':'In '+b.days+' days')+' · '+b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),'bday')).join('')}</div>`:`<p class="hint">None in the next 60 days. ${all.filter(p=>p.birthday).length} people have a birthday saved; add more on their cards as you learn them.</p>`}
+    ${bd.length?`<div class="rail">${bd.map(({p,b,kid})=>pcard(p,kid?kidLine(kid,b):'',(b.days===0?'Today 🎂':b.days===1?'Tomorrow':'In '+b.days+' days')+' · '+b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),'bday')).join('')}</div>`:`<p class="hint">None in the next ${BDAY_DAYS} days. ${all.filter(p=>p.birthday).length} people have a birthday saved; add more on their cards as you learn them.</p>`}
     <div class="sh"><h3>Recently in touch</h3><button class="more" type="button" data-view="orbit">See the map</button></div>
     <div class="rail">${recent.map(p=>pcard(p,'',ago(lastSeen(p)))).join('')}</div>
     ${meta.wrapped?`<div class="sh"><h3>Your ${THIS_YEAR} so far</h3><button class="more" type="button" data-view="wrapped">Open Orbit Wrapped</button></div>`:''}
@@ -911,7 +926,7 @@ function renderHome(){
 
 // ---------- settings ----------
 const ACCENTS={gold:['Gold','#f3c46a','#a8711a'],lavender:['Lavender','#b9a8ff','#6050c2'],teal:['Teal','#6fd6c8','#1d8577'],coral:['Coral','#f39b7c','#c4553a'],rose:['Rose','#f59ac0','#b63f78'],sky:['Sky','#8cc8ff','#2a6fb8']};
-const SET_DEF={profile:{name:'Sheneur Menaker',callMe:'Shnay',birthday:'',city:'',phone:'',email:'',instagram:'',about:'',birthTime:'',birthPlace:'',hdType:'',hdAuthority:''},
+const SET_DEF={profile:{name:'',callMe:'',birthday:'',city:'',phone:'',email:'',instagram:'',about:'',birthTime:'',birthPlace:'',hdType:'',hdAuthority:''},
   look:{theme:'system',accent:'gold',text:'normal',motion:'system',startView:'home',privacy:false},
   remind:{driftDays:182,reachDays:90,birthdayDays:60,homeBirthdays:true,homeDrift:true,weeklyNote:true,pauseUntil:''},custom:{circles:[]}};
 let SET=JSON.parse(JSON.stringify(SET_DEF));
@@ -953,7 +968,7 @@ function exportJSON(){
 function exportMD(){
   const by=c=>exportRows().filter(p=>(p.circle||'Friend')===c);
   const one=p=>{const pr=profiles.get(p.id)||{},b=(p.birthday||'').replace(/^1604-/,'');const L=[`### ${fullName(p)}${p.nickname?` ("${p.nickname}")`:''}`,[isInner(p)?'Inner sphere':'',p.role,p.city,p.job].filter(Boolean).join(' · '),b?`Birthday: ${b}`:'',p.whereMet?`Met: ${p.whereMet}${p.yearMet?' ('+p.yearMet+')':''}`:'',p.interests?`Interests: ${p.interests}`:'',(p.kids||[]).filter(k=>k.name).length?`Kids: ${(p.kids||[]).filter(k=>k.name).map(k=>k.name+(k.birthday?` (born ${k.birthday.replace(/^1604-/,'')})`:'')).join(', ')}`:'',lastSeen(p)?`Last contact: ${lastSeen(p)} · ${msgCount(p).toLocaleString()} messages`:'No contact logged',(p.links||[]).length?`Connected to: ${(p.links||[]).map(id=>people.get(id)).filter(Boolean).map(fullName).join(', ')}`:'',p.notes?`Notes: ${p.notes}`:'',pr.summary?`What I know: ${pr.summary}`:'',pr.followUps&&pr.followUps.length?`Bring up next time: ${pr.followUps.join('; ')}`:''];return L.filter(Boolean).join('\n')};
-  return [`# ${SET.profile.name||'My'} Orbit`,`Exported ${new Date().toLocaleDateString()} · ${people.size} people`,'',...['Family','Friend','Long Orbit','Outer Orbit','In memory'].flatMap(c=>{const a=by(c);return a.length?[`## ${c} (${a.length})`,'',...a.map(p=>one(p)+'\n')]:[]})].join('\n');
+  return [`# ${SET.profile.name||'My'} Orbit`,`Exported ${new Date().toLocaleDateString()} · ${people.size} people`,'',...[...new Set(['Family','Friend',...customCircles().map(c=>c.name),'Outer Orbit','In memory',...exportRows().map(p=>p.circle||'Friend')])].flatMap(c=>{const a=by(c);return a.length?[`## ${c} (${a.length})`,'',...a.map(p=>one(p)+'\n')]:[]})].join('\n');
 }
 function renderSettings(){
   const P=SET.profile,L=SET.look,Rm=SET.remind,all=[...people.values()];
@@ -966,7 +981,7 @@ function renderSettings(){
   <section class="scard"><h3>Your profile</h3><p class="lede">Orbit uses this to greet you and to write drafts in your voice.</p>
     <div class="meav">${P.photo&&window.ORBIT_BLOB?`<img src="${window.ORBIT_BLOB(P.photo)}" alt="Your profile picture">`:`<span>${esc(((P.name||'?').split(/\s+/).slice(0,2).map(w=>w[0]).join('')).toUpperCase())}</span>`}
       <div><b>Profile picture</b><small>Your connections see it next to your signals.</small><div class="meav-acts"><label class="btn small">${P.photo?'Change photo':'Add a photo'}<input type="file" accept="image/*" id="mePhotoIn"></label>${P.photo?'<button class="btn small" type="button" id="mePhotoRm">Remove</button>':''}</div></div></div>
-    <div class="sgrid">${inp('profile','name','Full name')}${inp('profile','callMe','What friends call you','text','Shnay')}${inp('profile','birthday','Birthday','date')}${inp('profile','city','Home base','text','Milan, Hudson Valley')}${inp('profile','phone','Phone','tel')}${inp('profile','email','Email','email')}${inp('profile','instagram','Instagram','text','@')}</div>
+    <div class="sgrid">${inp('profile','name','Full name')}${inp('profile','callMe','What friends call you','text','A nickname is fine')}${inp('profile','birthday','Birthday','date')}${inp('profile','city','Home base','text','Your city')}${inp('profile','phone','Phone','tel')}${inp('profile','email','Email','email')}${inp('profile','instagram','Instagram','text','@')}</div>
     <label class="sfield full"><span>About you <small>shared with the Draft writer as context</small></span><textarea data-set="profile.about" rows="3" placeholder="What you do, what you care about, how you like to show up for people">${esc(P.about||'')}</textarea></label></section>
 
   <section class="scard"><h3>Your Human Design</h3><p class="lede">Your chart gets compared with each person's in their Human Design dropdown and in personal reads.</p>
@@ -987,7 +1002,7 @@ function renderSettings(){
     <div class="sgrid">${num('remind','reachDays','Suggest reaching out after','days',14,365)}${num('remind','driftDays','Drift alert after','days',60,730)}${num('remind','birthdayDays','Show birthdays coming up within','days',3,120)}</div>
     ${tog('remind','homeBirthdays','Birthdays on Home','')}${tog('remind','homeDrift','Drift alerts on Home','')}
     <div class="spause"><b style="margin-right:auto">Pause Orbit</b>${pausedUntil()?`<span>Paused until ${esc(pausedUntil())}</span><button type="button" class="btn small" data-act="unpause">Resume</button>`:`<button type="button" class="btn small" data-pause="7">1 week</button><button type="button" class="btn small" data-pause="14">2 weeks</button><button type="button" class="btn small" data-pause="30">1 month</button><input type="date" data-set="remind.pauseUntil" aria-label="Pause until" min="${TODAY}">`}</div><p class="hint" style="margin:0 0 4px">Traveling or heads-down? Pausing hides drift alerts and reach-out nudges until the date you pick.</p>
-    ${tog('remind','weeklyNote','Weekly reach-out note','Your Sunday sync sends a short note with who to text and upcoming birthdays. Ask Claude to change the day or time.')}</section>
+    ${tog('remind','weeklyNote','Weekly reach-out note','A Sunday morning notification with how many people could use a hello.')}</section>
 
   <section class="scard"><h3>Circles</h3><p class="lede">Group people your own way. Custom circles show up in filters, on the Orbit map in their color, and on each card.</p>${circlesHTML()}</section>
 
@@ -1001,14 +1016,14 @@ function renderSettings(){
     </div></section>
 
   <section class="scard"><h3>About Orbit</h3>
-    <div class="sabout"><div><b>${all.length}</b><span>people</span></div><div><b>${all.filter(isInner).length}</b><span>inner sphere</span></div><div><b>${all.reduce((a,p)=>a+(p.links||[]).length,0)/2|0}</b><span>connections</span></div><div><b>${all.reduce((a,p)=>a+msgCount(p),0).toLocaleString()}</b><span>messages tracked</span></div></div>
+    <div class="sabout"><div><b>${counted()}</b><span>of ${MAX_PEOPLE} people</span></div><div><b>${all.filter(isInner).length}</b><span>inner sphere</span></div><div><b>${all.reduce((a,p)=>a+(p.links||[]).length,0)/2|0}</b><span>connections</span></div><div><b>${all.reduce((a,p)=>a+msgCount(p),0).toLocaleString()}</b><span>messages tracked</span></div></div>
     <p class="hint">${syncAt?`Messages last synced ${esc(new Date(syncAt+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}. `:''}Your Orbit is private to your Claude account.</p></section>
   </div>`;
 }
 function setPath(path,v){const [s,k]=path.split('.');SET[s][k]=v}
 document.addEventListener('input',e=>{const t=e.target;if(view!=='settings'||!t.dataset)return;if(t.dataset.set){setPath(t.dataset.set,t.type==='number'?+t.value:t.value);saveSettings();if(/^profile\.(birth|hd)/.test(t.dataset.set)&&$('myHd'))$('myHd').innerHTML=myHdHTML()}if(t.dataset.sett){setPath(t.dataset.sett,t.checked);saveSettings()}});
 document.addEventListener('click',e=>{if(view!=='settings')return;const b=e.target.closest('[data-setv]');if(b){setPath(b.dataset.setv,b.dataset.v);document.querySelectorAll(`[data-setv="${b.dataset.setv}"]`).forEach(x=>x.setAttribute('aria-pressed',String(x===b)));saveSettings();return}
-  const x=e.target.closest('[data-exp]');if(x){const d=new Date().toISOString().slice(0,10),k=x.dataset.exp;offerFile(`orbit-${d}.${k}`,k==='csv'?exportCSV():k==='json'?exportJSON():exportMD())}});
+  const x=e.target.closest('[data-exp]');if(x){const d=TODAY,k=x.dataset.exp;offerFile(`orbit-${d}.${k}`,k==='csv'?exportCSV():k==='json'?exportJSON():exportMD())}});
 document.addEventListener('click',e=>{if(!document.documentElement.classList.contains('privacy'))return;const b=e.target.closest('.know,.fld');if(b&&!b.classList.contains('revealed')){b.classList.add('revealed');e.preventDefault();e.stopPropagation()}},true);
 
 // ---------- custom circles, pause, import ----------
@@ -1037,19 +1052,19 @@ function matchExisting(r){const ph=normPhone(r.phone),em=(r.email||'').toLowerCa
 function importPlan(){if(!IMP.rows)return null;const add=[],fill=[];IMP.rows.forEach(r=>{const p=matchExisting(r);if(!p){add.push(r);return}const patch={};['nickname','phone','email','city','birthday','job','notes','instagram','whereMet'].forEach(k=>{if(r[k]&&!p[k])patch[k]=r[k]});if(Object.keys(patch).length)fill.push({p,patch})});return {add,fill,same:IMP.rows.length-add.length-fill.length}}
 function importHTML(){const pl=importPlan();if(!pl)return `<label class="sdrop"><input type="file" id="impFile" accept=".csv,.vcf,.json,.txt,text/csv,text/vcard,application/json"><b>Choose a file</b><small>CSV (from Google Contacts, a spreadsheet or an Orbit export), a contacts card file (.vcf, from the Contacts app: select all, then File, Export vCard) or an Orbit JSON export.</small></label>`;
   return `<div class="simp"><p><b>${IMP.rows.length}</b> people in ${esc(IMP.src)}</p>
-    <div class="simprow"><div><b>${pl.add.length} new</b><small>${pl.add.slice(0,6).map(r=>esc((r.first+' '+r.last).trim())).join(', ')}${pl.add.length>6?'…':''}</small></div>${pl.add.length?`<label class="sfield"><span>Add them to</span><select id="impCircle">${circleList().map(c=>`<option${c===IMP.circle?' selected':''}>${esc(c)}</option>`).join('')}</select></label><button type="button" class="btn small primary" data-imp="add">Add ${pl.add.length}</button>`:''}</div>
+    <div class="simprow"><div><b>${pl.add.length} new</b><small>${pl.add.slice(0,6).map(r=>esc((r.first+' '+r.last).trim())).join(', ')}${pl.add.length>6?'…':''}</small></div>${pl.add.length?`<label class="sfield"><span>Add them to</span><select id="impCircle">${circleList().map(c=>`<option${c===IMP.circle?' selected':''}>${esc(c)}</option>`).join('')}</select></label><button type="button" class="btn small primary" data-imp="add">Add ${Math.min(pl.add.length,roomLeft())||''}</button>`:''}</div>${pl.add.length>roomLeft()?`<p class="hint">Orbit holds ${MAX_PEOPLE} people and you have room for ${roomLeft()} more, so only the first ${roomLeft()} will be added.</p>`:''}
     <div class="simprow"><div><b>${pl.fill.length} already in Orbit with new details</b><small>Only fills empty fields, never overwrites. ${pl.fill.slice(0,5).map(x=>esc(fullName(x.p))).join(', ')}${pl.fill.length>5?'…':''}</small></div>${pl.fill.length?`<button type="button" class="btn small" data-imp="fill">Fill in ${pl.fill.length}</button>`:''}</div>
     ${pl.same?`<p class="hint">${pl.same} already match exactly, nothing to do.</p>`:''}
     <button type="button" class="more" data-imp="reset">Choose a different file</button></div>`}
 async function runImport(kind){const pl=importPlan();if(!pl||!db)return;let n=0;
-  if(kind==='add'){const c=($('impCircle')||{}).value||IMP.circle;for(const r of pl.add){const id='p-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);const doc={id,first:r.first,last:r.last,circle:r.circle&&circleList().includes(r.circle)?r.circle:c,years:[THIS_YEAR],touches:[],links:[]};['nickname','phone','email','city','birthday','job','notes','instagram','whereMet'].forEach(k=>{if(r[k])doc[k]=r[k]});try{await db.doc('contacts/'+id).set(doc);n++}catch(_){}}toast(`Added ${n} people`)}
+  if(kind==='add'){const c=($('impCircle')||{}).value||IMP.circle;let room=roomLeft(),skipped=0;for(const r of pl.add){const rc=r.circle&&circleList().includes(r.circle)?r.circle:c;if(rc!==MEM){if(room<=0){skipped++;continue}room--}const id='p-'+Date.now().toString(36)+Math.random().toString(36).slice(2,5);const doc={id,first:r.first,last:r.last,circle:r.circle&&circleList().includes(r.circle)?r.circle:c,years:[THIS_YEAR],touches:[],links:[]};['nickname','phone','email','city','birthday','job','notes','instagram','whereMet'].forEach(k=>{if(r[k])doc[k]=r[k]});try{await db.doc('contacts/'+id).set(doc);n++}catch(_){}}toast(`Added ${n} people`);if(skipped)status(`${skipped} ${skipped===1?'person wasn’t':'people weren’t'} added. Orbit holds ${MAX_PEOPLE} people and yours is full.`)}
   else{for(const {p,patch} of pl.fill){try{await db.doc('contacts/'+p.id).update(patch);n++}catch(_){}}toast(`Filled in ${n} cards`)}
   IMP.rows=null;renderSettings()}
 document.addEventListener('change',async e=>{if(e.target.id==='impCircle'){IMP.circle=e.target.value;return}if(e.target.id!=='impFile')return;const f=e.target.files&&e.target.files[0];if(!f)return;
   try{const t=await f.text();const n=f.name.toLowerCase();IMP.rows=n.endsWith('.vcf')||/BEGIN:VCARD/i.test(t.slice(0,200))?fromVCF(t):n.endsWith('.json')||t.trim().startsWith('{')||t.trim().startsWith('[')?fromJSON(t):fromCSV(t);IMP.src=f.name;if(!IMP.rows.length){IMP.rows=null;status('I couldn’t find any people in that file.')}}catch(_){IMP.rows=null;status('That file couldn’t be read.')}renderSettings()});
 document.addEventListener('click',e=>{const b=e.target.closest('[data-imp]');if(b){const k=b.dataset.imp;if(k==='reset'){IMP.rows=null;renderSettings()}else{b.disabled=true;b.textContent='Working…';runImport(k)}return}
   if(e.target.closest('[data-act="unpause"]')){SET.remind.pauseUntil='';saveSettings();render();return}
-  const pz=e.target.closest('[data-pause]');if(pz){const d=new Date();d.setDate(d.getDate()+(+pz.dataset.pause));SET.remind.pauseUntil=d.toISOString().slice(0,10);saveSettings();renderSettings();return}
+  const pz=e.target.closest('[data-pause]');if(pz){const d=new Date();d.setDate(d.getDate()+(+pz.dataset.pause));SET.remind.pauseUntil=isoLocal(d);saveSettings();renderSettings();return}
   const cd=e.target.closest('[data-cdel]');if(cd){setCircles(customCircles().filter(c=>c.name!==cd.dataset.cdel));return}
   if(e.target.closest('[data-cadd]')){const nm=($('cNew').value||'').trim(),col=$('cNewColor').value;if(!nm)return;if(circleList().some(c=>c.toLowerCase()===nm.toLowerCase())){status('That circle already exists.');return}setCircles([...customCircles(),{name:nm,color:col}])}});
 document.addEventListener('input',e=>{const t=e.target;if(t.dataset&&t.dataset.ccolor){setCircles(customCircles().map(c=>c.name===t.dataset.ccolor?{...c,color:t.value}:c))}});
@@ -1403,13 +1418,13 @@ function renderReach(){
   const fu=p=>{const pr=profiles.get(p.id);return pr&&pr.followUps&&pr.followUps[0]||''};
   const dl=driftList();
   $('view').innerHTML=`${pausedUntil()?`<div class="pausebar"><span>⏸ Orbit is paused until <b>${esc(new Date(pausedUntil()+'T12:00:00').toLocaleDateString(undefined,{month:'long',day:'numeric'}))}</b>. Drift alerts and reach-out nudges are off.</span><button type="button" class="btn small" data-act="unpause">Resume</button></div>`:''}
-    ${dl.length?`<div class="sh" style="margin-top:0"><h3>Drift alerts</h3><span class="pill">${dl.length}</span></div><p class="hint">Six months or more since you were in touch. Newest drifts first.</p><div class="grid3">${dl.map(driftCard).join('')}</div>`:''}
+    ${dl.length?`<div class="sh" style="margin-top:0"><h3>Drift alerts</h3><span class="pill">${dl.length}</span></div><p class="hint">${durTxt(DRIFT_DAYS).replace(/^a /,'A ')} or more since you were in touch. Newest drifts first.</p><div class="grid3">${dl.map(driftCard).join('')}</div>`:''}
     <div class="sh" ${dl.length?'':'style="margin-top:0"'}><h3>This week's six</h3></div>
     <p class="hint">A rotating handful from your sphere. Log a touch on their card after you reach out and they drop off.</p>
-    <div class="grid3">${pick.length?pick.map(p=>pcard(p,fu(p),lastSeen(p)?'Last contact '+ago(lastSeen(p)):'No contact yet')).join(''):'<div class="empty">Everyone in your sphere heard from you in the last 3 months.</div>'}</div>
-    <div class="sh"><h3>Birthdays in the next 60 days</h3></div>
+    <div class="grid3">${pick.length?pick.map(p=>pcard(p,fu(p),lastSeen(p)?'Last contact '+ago(lastSeen(p)):'No contact yet')).join(''):'<div class="empty">Everyone in your sphere heard from you in the last ${durTxt(REACH_DAYS)}.</div>'}</div>
+    <div class="sh"><h3>Birthdays in the next ${BDAY_DAYS} days</h3></div>
     ${bd.length?`<div class="rail">${bd.map(({p,b,kid})=>pcard(p,kid?kidLine(kid,b):'',(b.days===0?'Today':b.days===1?'Tomorrow':'In '+b.days+' days')+' · '+b.date.toLocaleDateString(undefined,{month:'short',day:'numeric'}),'bday')).join('')}</div>`:'<p class="hint">None coming up.</p>'}
-    <div class="sh"><h3>Not reached in 3+ months</h3><span class="pill">${list.length}</span></div>
+    <div class="sh"><h3>Not reached in ${durTxt(REACH_DAYS)} or more</h3><span class="pill">${list.length}</span></div>
     <div class="list">${list.length?list.map(p=>`<button class="row" type="button" data-id="${esc(p.id)}">${av(p)}<span style="min-width:0"><div class="nm">${esc(fullName(p))}</div><div class="meta">${esc(sub(p)||p.circle||'')}</div></span>${statusPill(p)}</button>`).join(''):'<div class="empty">All caught up.</div>'}</div>`;
 }
 
@@ -1521,7 +1536,7 @@ function renderDetail(){
 // ---------- drafter ----------
 const TONES=[['checkin','Check in','A friendly, low-key check-in with no agenda. Ask one easy question about their life.'],
   ['followup','Follow up','Follow up on one specific thing from the "bring up next time" list (pick the one that feels most natural right now).'],
-  ['plans','Make plans','Suggest getting together, with one concrete idea that fits who they are and what you share (a meal, a jam, the dome, the lake, a show).'],
+  ['plans','Make plans','Suggest getting together, with one concrete idea that fits who they are and what the two of them share.'],
   ['rekindle','Reconnect','Reconnect after a long quiet stretch. Warm and easy, no guilt, no over-apologizing, no mention of how long it has been unless it is natural.'],
   ['birthday','Birthday','A happy birthday text that feels personal to them.'],
   ['thanks','Thank you','Thank them for something specific and recent, if the notes mention one; otherwise a simple appreciation note.']];
@@ -1539,30 +1554,28 @@ function drafterHTML(p){
 }
 function draftPrompt(p,tone,angle){
   const pr=profiles.get(p.id)||{},v=meta.voice||{},t=(TONES.find(x=>x[0]===tone)||TONES[0])[2],b=nextBirthday(p),ls=lastSeen(p);
-  const card=[['Name',fullName(p)],['Nickname',p.nickname],['They call him',p.callsMe],['Circle',p.circle],['Lives in',p.city],['Job',p.job],['Where they met',[p.whereMet,p.yearMet].filter(Boolean).join(', ')],['Interests',p.interests],['Notes',p.notes]].filter(x=>x[1]).map(([k,v])=>`${k}: ${v}`).join('\n');
+  const card=[['Name',fullName(p)],['Nickname',p.nickname],['What they call the sender',p.callsMe],['Circle',p.circle],['Lives in',p.city],['Job',p.job],['Where they met',[p.whereMet,p.yearMet].filter(Boolean).join(', ')],['Interests',p.interests],['Notes',p.notes]].filter(x=>x[1]).map(([k,v])=>`${k}: ${v}`).join('\n');
   const touches=(p.touches||[]).filter(x=>!x.source&&x.note).sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,3).map(x=>`${x.date}: ${x.kind||''} ${x.note}`).join('\n');
-  return `You are drafting a text message that ${(SET.profile.name||'Sheneur').split(' ')[0]} (friends call him ${myName()}) will send from his own phone to someone in his life.${SET.profile.about?'\nAbout him: '+SET.profile.about:''} Write it exactly the way he texts.
+  const me=(SET.profile.name||'').split(' ')[0]||myName(),ex=(v.examples||[]);
+  return `You are drafting a text message that ${me}${myName()!==me?` (friends call them ${myName()})`:''} will send from their own phone to someone in their life.${SET.profile.about?`\nAbout ${me}: `+SET.profile.about:''} Write it exactly the way ${me} texts.
 
-HOW HE TEXTS
+HOW ${me.toUpperCase()} TEXTS
 ${v.style||'Warm, casual, short, upbeat. Exclamation points, light emoji at most.'}
-
-TEXTS HE HAS SENT BEFORE (for voice only; do not reuse their content)
-${(v.examples||[]).map(x=>'- '+x).join('\n')}
-
-WHO HE IS TEXTING
+${ex.length?`\nTEXTS ${me.toUpperCase()} HAS SENT BEFORE (for voice only; do not reuse their content)\n${ex.map(x=>'- '+x).join('\n')}\n`:''}
+WHO ${me.toUpperCase()} IS TEXTING
 ${card}
-${pr.summary?'\nWhat he knows about them (written to him, so "you" means Sheneur): '+pr.summary:''}${pr.facts&&pr.facts.length?'\nFacts: '+pr.facts.join('; '):''}${pr.followUps&&pr.followUps.length?'\nThings to bring up next time: '+pr.followUps.join('; '):''}${pr.vibe?'\nHow they talk to each other: '+pr.vibe:''}
-Last in touch: ${ls?ls+' ('+ago(ls)+')':'unknown'}${b?`\nTheir birthday is in ${b.days} day${b.days===1?'':'s'}.`:''}${touches?'\nRecent notes he logged:\n'+touches:''}
+${pr.summary?`\nWhat ${me} knows about them (written to ${me}, so "you" means ${me}): `+pr.summary:''}${pr.facts&&pr.facts.length?'\nFacts: '+pr.facts.join('; '):''}${pr.followUps&&pr.followUps.length?'\nThings to bring up next time: '+pr.followUps.join('; '):''}${pr.vibe?'\nHow they talk to each other: '+pr.vibe:''}
+Last in touch: ${ls?ls+' ('+ago(ls)+')':'unknown'}${b?`\nTheir birthday is in ${b.days} day${b.days===1?'':'s'}.`:''}${touches?`\nRecent notes ${me} logged:\n`+touches:''}
 Today is ${NOW.toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'})}.
 
 WHAT TO WRITE
-${t}${angle?'\nHe specifically wants to mention: '+angle:''}
+${t}${angle?`\n${me} specifically wants to mention: `+angle:''}
 
 RULES
-- One to three short sentences, like a real text. Address them the way he would (first name or nickname, or no name at all).
-- Sound like him, not like an assistant. No em dashes, no hashtags, no sign-off, no quotation marks around the message.
+- One to three short sentences, like a real text. Address them the way ${me} would (first name or nickname, or no name at all).
+- Sound like ${me}, not like an assistant. No em dashes, no hashtags, no sign-off, no quotation marks around the message.
 - Only use facts given above. Do not invent events, plans or details.
-- Stay away from health, money, family conflict and anything private unless he asked for it above.
+- Stay away from health, money, family conflict and anything private unless ${me} asked for it above.
 - Reply with only the message text.`;
 }
 async function runDraft(){
@@ -1800,20 +1813,22 @@ $('palQ').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){palSel=Math.min
 $('pal').addEventListener('click',e=>{if(e.target.id==='pal')closePal();const b=e.target.closest('[data-pi]');if(b)palGo(+b.dataset.pi)});
 
 // ---------- events ----------
-function addPerson(){closeAddAsk();const cities=[...new Set([...people.values()].map(p=>(p.city||'').trim()).filter(Boolean))].sort();
+function addPerson(){closeAddAsk();const full=roomLeft()<=0;const cities=[...new Set([...people.values()].map(p=>(p.city||'').trim()).filter(Boolean))].sort();
   const m=document.createElement('div');m.id='addModal';m.className='cmodal';
   m.innerHTML=`<form class="cmodal-box addp" role="dialog" aria-modal="true" aria-labelledby="addT" novalidate>
     <h3 id="addT">Add someone</h3><p>A few basics so they show up in the right place.</p>
     <label class="sfield"><span>First name <b class="req">*</b></span><input id="ap-first" autocomplete="off" autocapitalize="words" required></label>
     <label class="sfield"><span>Last name</span><input id="ap-last" autocomplete="off" autocapitalize="words"></label>
     <label class="sfield"><span>Where they live <b class="req">*</b></span><input id="ap-city" list="ap-cities" autocomplete="off" placeholder="City or area" required><datalist id="ap-cities">${cities.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label>
-    <fieldset class="ap-circ"><legend>Circle <b class="req">*</b></legend><div>${circleList().map(c=>`<button type="button" data-apc="${esc(c)}" aria-pressed="false">${esc(c)}</button>`).join('')}</div></fieldset>
+    <fieldset class="ap-circ"><legend>Circle <b class="req">*</b></legend><div>${circleList().map(c=>`<button type="button" data-apc="${esc(c)}" aria-pressed="false"${full&&c!==MEM?' disabled':''}>${esc(c)}</button>`).join('')}</div></fieldset>
+    ${full?`<p class="ap-full">Your orbit is full at ${MAX_PEOPLE} people. To add someone new, remove someone first. People kept In memory don’t take a spot.</p>`:roomLeft()<=10?`<p class="ap-full soft">${roomLeft()} of ${MAX_PEOPLE} spots left.</p>`:''}
     <p class="ap-msg" role="status"></p>
     <div class="cmodal-acts"><button class="btn" type="button" id="apNo">Cancel</button><button class="btn primary" type="submit" id="apYes" disabled>Add</button></div></form>`;
   let circ='';const f=m.querySelector('form'),ok=()=>{const v=m.querySelector('#ap-first').value.trim()&&m.querySelector('#ap-city').value.trim()&&circ;m.querySelector('#apYes').disabled=!v;return v};
   m.addEventListener('input',ok);
   m.addEventListener('click',ev=>{if(ev.target===m||ev.target.id==='apNo'){closeAddAsk();return}const b=ev.target.closest('[data-apc]');if(b){circ=b.dataset.apc;m.querySelectorAll('[data-apc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));ok()}});
   f.addEventListener('submit',async ev=>{ev.preventDefault();if(!ok()){m.querySelector('.ap-msg').textContent='First name, where they live and a circle are needed.';return}
+    if(circ!==MEM&&roomLeft()<=0){m.querySelector('.ap-msg').textContent=`Your orbit is full at ${MAX_PEOPLE} people.`;return}
     const id='p-'+Date.now().toString(36);const p={id,first:m.querySelector('#ap-first').value.trim(),last:m.querySelector('#ap-last').value.trim(),city:m.querySelector('#ap-city').value.trim(),circle:circ,years:[THIS_YEAR],touches:[]};
     closeAddAsk();people.set(id,p);if(view!=='people')setView('people');openPerson(id);
     if(db){try{await db.doc('contacts/'+id).set(p);toast(`${p.first} added`)}catch(e){status('Couldn’t add just now.')}}});
@@ -1854,22 +1869,26 @@ document.addEventListener('click',async e=>{
   if(t.dataset.act==='kedit'){kEdit=selected;lastRenderedId=null;renderDetail();setTimeout(()=>{const f=$('ke-summary');if(f)f.focus()},30);return}
   if(t.dataset.act==='kcancel'){kEdit=null;lastRenderedId=null;renderDetail();return}
   if(t.dataset.act==='ksave'){const id=selected,lines=v=>v.split('\n').map(x=>x.replace(/^[-•*]\s*/,'').trim()).filter(Boolean);const old=profiles.get(id)||{};const np={...old,summary:$('ke-summary').value.trim(),facts:lines($('ke-facts').value),followUps:lines($('ke-fu').value),vibe:$('ke-vibe').value.trim(),editedAt:TODAY};profiles.set(id,np);kEdit=null;lastRenderedId=null;renderDetail();if(db)db.doc('profiles/'+id).set(np).then(()=>toast('Saved')).catch(()=>status('Couldn’t save just now. Try again in a moment.'));return}
-  if(t.dataset.act==='inner'){const p=people.get(selected);if(!p)return;save(p.id,{inner:!p.inner});p.inner=!p.inner;lastRenderedId=null;renderDetail();toast(p.inner?'Added to your inner sphere':'Moved out of your inner sphere');return}
+  if(t.dataset.act==='inner'){const p=people.get(selected);if(!p)return;save(p.id,{inner:!p.inner},true);lastRenderedId=null;render();toast(p.inner?'Added to your inner sphere':'Moved out of your inner sphere');return}
   if(t.id==='mergeYes'){const from=mergeFrom;t.disabled=true;mergeInto(selected,from);return}
   if(t.id==='mergeNo'){mergeFrom=null;lastRenderedId=null;renderDetail();return}
   if(t.id==='photoRm'){const p=people.get(selected);const old=p&&p.photo;if(!old)return;save(p.id,{photo:null});if(assetsNs)assetsNs.delete(old).catch(()=>{});toast('Photo removed');return}
   const sa=t.dataset.sadd,sn=t.dataset.sno;
-  if(sa||sn){const s=sugs.get(sa||sn);if(!s||!db)return;t.disabled=true;try{if(sa){const id='p-'+Date.now().toString(36);const parts=String(s.name).trim().split(/\s+/);const p={id,first:parts[0]||s.name,last:parts.slice(1).join(' ')||null,circle:(s.circle===ORBIT?OUTER:s.circle)||'Friend',years:s.circle===ORBIT||s.circle===OUTER?[]:[THIS_YEAR],touches:[]};if(s.role)p.role=s.role;if(String(s.handle).includes('@'))p.email=s.handle;else p.phone=s.handle;if(s.why)p.notes=s.why;await db.doc('contacts/'+id).set(p);await db.doc('suggestions/'+s.id).delete();toast('Added '+p.first)}else{await db.doc('suggestions/'+s.id).update({dismissed:true,dismissedAt:TODAY});toast('Hidden')}}catch(_){status('Couldn’t update just now. Try again in a moment.');t.disabled=false}return}
+  if(sa||sn){const s=sugs.get(sa||sn);if(!s||!db)return;if(sa&&roomLeft()<=0){fullNotice();return}t.disabled=true;try{if(sa){const id='p-'+Date.now().toString(36);const parts=String(s.name).trim().split(/\s+/);const p={id,first:parts[0]||s.name,last:parts.slice(1).join(' ')||null,circle:(s.circle===ORBIT?OUTER:s.circle)||'Friend',years:s.circle===ORBIT||s.circle===OUTER?[]:[THIS_YEAR],touches:[]};if(s.role)p.role=s.role;if(String(s.handle).includes('@'))p.email=s.handle;else p.phone=s.handle;if(s.why)p.notes=s.why;await db.doc('contacts/'+id).set(p);await db.doc('suggestions/'+s.id).delete();toast('Added '+p.first)}else{await db.doc('suggestions/'+s.id).update({dismissed:true,dismissedAt:TODAY});toast('Hidden')}}catch(_){status('Couldn’t update just now. Try again in a moment.');t.disabled=false}return}
   const row=t.closest&&t.closest('[data-id]');
   if(row){openPerson(row.dataset.id);return}
   if(t.dataset.yr){const p=people.get(selected),y=+t.dataset.yr,s=new Set(p.years||[]);s.has(y)?s.delete(y):s.add(y);save(p.id,{years:[...s].sort()});return}
-  if(t.dataset.rm!==undefined){const p=people.get(selected);save(p.id,{touches:(p.touches||[]).filter((_,i)=>i!==+t.dataset.rm)});return}
+  if(t.dataset.rm!==undefined&&t.closest('#detail')&&selected){const p=people.get(selected);save(p.id,{touches:(p.touches||[]).filter((_,i)=>i!==+t.dataset.rm)});return}
   if(t.id==='mePhotoRm'){const old=SET.profile.photo;SET.profile.photo='';saveSettings();if(old&&assetsNs)assetsNs.delete(old).catch(()=>{});renderSettings();window.dispatchEvent(new Event('orbit-me'));return}
   if(t.id==='delAsk'){const p=people.get(selected);if(!p)return;closeDelAsk();const m=document.createElement('div');m.id='delModal';m.className='cmodal';
     m.innerHTML=`<div class="cmodal-box" role="alertdialog" aria-modal="true" aria-labelledby="delT" aria-describedby="delD"><h3 id="delT">Remove ${esc(fullName(p)||p.first||'this person')}?</h3><p id="delD">Their notes, history and reminders will be deleted. This can’t be undone.</p><div class="cmodal-acts"><button class="btn" type="button" id="delNo">Keep</button><button class="btn danger" type="button" id="delYes">Remove</button></div></div>`;
     m.addEventListener('click',ev=>{if(ev.target===m)closeDelAsk()});document.body.appendChild(m);setTimeout(()=>{const b=m.querySelector('#delNo');if(b)b.focus()},30);return}
   if(t.id==='delNo'){closeDelAsk();return}
-  if(t.id==='delYes'){closeDelAsk();const id=selected;people.delete(id);selected=null;confirmDel=false;render();toast('Removed');if(db)db.doc('contacts/'+id).delete().catch(()=>status('Couldn’t remove just now.'));return}
+  if(t.id==='delYes'){closeDelAsk();const id=selected,gone=people.get(id);if(!gone)return;
+    people.forEach(o=>{if(o.id!==id&&(o.links||[]).includes(id))save(o.id,{links:o.links.filter(x=>x!==id)},true)});
+    people.delete(id);selected=null;confirmDel=false;render();toast('Removed');
+    if(db){db.doc('contacts/'+id).delete().catch(()=>status('Couldn’t remove just now.'));if(profiles.has(id)){profiles.delete(id);db.doc('profiles/'+id).delete().catch(()=>{})}}
+    if(gone.photo&&assetsNs)assetsNs.delete(gone.photo).catch(()=>{});return}
   if(!$('menu').hidden&&!t.closest('#menu')&&!t.closest('#tabMore'))$('menu').hidden=true;
 });
 
@@ -1893,7 +1912,7 @@ document.addEventListener('change',e=>{
   if(e.target.id==='mergeSel'){mergeFrom=e.target.value||null;lastRenderedId=null;renderDetail();return}
   if(e.target.id==='linkSel'){const v=e.target.value;if(v&&selected)setLink(selected,v,true);return}
   const k=e.target.dataset.k;if(!k||!selected)return;let v=e.target.value.trim();if(k==='yearMet')v=v?+v:'';
-  const p=people.get(selected);if((p[k]??'')===v)return;if(k==='circle')lastRenderedId=null;save(selected,{[k]:v===''?null:v});
+  const p=people.get(selected);if((p[k]??'')===v)return;if(k==='circle'&&p.circle===MEM&&v!==MEM&&roomLeft()<=0){lastRenderedId=null;renderDetail();fullNotice();return}if(k==='circle')lastRenderedId=null;save(selected,{[k]:v===''?null:v});
 });
 document.addEventListener('submit',e=>{if(e.target.id!=='touchForm')return;e.preventDefault();const p=people.get(selected);const entry={date:$('tDate').value||TODAY,kind:$('tKind').value,note:$('tNote').value.trim()};save(p.id,{touches:[...(p.touches||[]),entry]});$('tNote').value='';toast('Logged')});
 addEventListener('keydown',e=>{

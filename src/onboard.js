@@ -3,7 +3,7 @@
 // then the app loads. Nothing here reads messages; contacts are read only after the iPhone permission prompt,
 // and only the people the user picks are saved.
 (function(){
-const STEPS=9, LIMITS={inner:5,close:15,friends:50,family:Infinity};
+const MAX_PEOPLE=150, STEPS=9, LIMITS={inner:5,close:15,friends:50,family:Infinity};
 const LAYER_NAME={inner:'Inner sphere',close:'Close friends',friends:'Friends',family:'Family'};
 const LAYER_COLOR={inner:'var(--inner)',close:'var(--accent)',friends:'var(--orbit)',family:'var(--fam)'};
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -132,15 +132,15 @@ function pickedList(){return S.people.filter(p=>S.picked[p.key])}
 function pick(){const n=pickedList().length,need=Math.max(0,10-n);
  const q=pickQ.toLowerCase(),list=S.people.filter(p=>!q||p.name.toLowerCase().includes(q)).slice(0,200);
  screen(`${head(5,4)}
- <div class="onb-titles"><h1>Pick your sphere</h1><p>Choose at least 10 people you want to stay close to. You can add more later.</p></div>
+ <div class="onb-titles"><h1>Pick your sphere</h1><p>Choose at least 10 people you want to stay close to. Orbit holds up to ${MAX_PEOPLE}, and you can add more later.</p></div>
  ${S.people.length?`<label class="onb-search">${ICON.search}<input type="search" id="oQ" aria-label="Search" placeholder="Search contacts" value="${esc(pickQ)}"></label>`:''}
  <form class="onb-add" id="oAdd"><input id="oAddName" aria-label="Add someone by name" placeholder="${S.people.length?'Someone not in your contacts? Type a name':'Type a name and tap Add'}" autocomplete="off"><button type="submit">Add</button></form>
  <div class="onb-count"><b>${n} of 10 picked</b><span class="onb-dots" aria-hidden="true">${Array.from({length:10},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</span></div>
  <div class="onb-list" id="oList">${list.map(p=>`<button type="button" class="onb-person${S.picked[p.key]?' on':''}" data-k="${p.key}" aria-pressed="${!!S.picked[p.key]}"><span class="onb-av">${esc(initials(p.name))}</span><span class="onb-pn"><span>${esc(p.name)}</span><small>${esc([p.city,p.birthday?'birthday '+fmtB(p.birthday):''].filter(Boolean).join(' · ')||' ')}</small></span><span class="onb-tick">${ICON.check}</span></button>`).join('')||'<p class="onb-note">Nobody yet. Add your first person above.</p>'}</div>
  <button type="button" class="onb-cta" id="oNext" ${need?'disabled':''}>${need?`Pick ${need} more`:'Continue'}</button>`);
  const qi=root.querySelector('#oQ');if(qi){qi.oninput=()=>{pickQ=qi.value;const pos=qi.selectionStart;pick();const q2=root.querySelector('#oQ');q2.focus();q2.setSelectionRange(pos,pos)}}
- root.querySelector('#oList').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;if(S.picked[k])delete S.picked[k];else S.picked[k]=1;persist();const st=root.querySelector('.onb-list').scrollTop;pick();root.querySelector('.onb-list').scrollTop=st};
- root.querySelector('#oAdd').onsubmit=e=>{e.preventDefault();const v=root.querySelector('#oAddName').value.trim();if(!v)return;const parts=v.split(/\s+/);const k='m'+Date.now().toString(36);
+ root.querySelector('#oList').onclick=e=>{const b=e.target.closest('[data-k]');if(!b)return;const k=b.dataset.k;if(S.picked[k])delete S.picked[k];else{if(pickedList().length>=MAX_PEOPLE){alert(`Orbit holds ${MAX_PEOPLE} people. Unpick someone to add another.`);return}S.picked[k]=1}persist();const st=root.querySelector('.onb-list').scrollTop;pick();root.querySelector('.onb-list').scrollTop=st};
+ root.querySelector('#oAdd').onsubmit=e=>{e.preventDefault();const v=root.querySelector('#oAddName').value.trim();if(!v)return;if(pickedList().length>=MAX_PEOPLE){alert(`Orbit holds ${MAX_PEOPLE} people. Unpick someone to add another.`);return}const parts=v.split(/\s+/);const k='m'+Date.now().toString(36);
    S.people.unshift({key:k,first:parts[0],last:parts.slice(1).join(' '),name:v,phone:'',email:'',birthday:'',city:''});S.picked[k]=1;pickQ='';persist();pick()};
  root.querySelector('#oNext').onclick=()=>{if(pickedList().length>=10)go(6)}}
 const initials=n=>n.split(/\s+/).filter(Boolean).slice(0,2).map(w=>w[0]).join('').toUpperCase();

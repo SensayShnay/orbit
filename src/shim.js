@@ -33,6 +33,10 @@ let chan=null;
 function realtime(){if(chan)return;chan=sb.channel('docs-'+uid).on('postgres_changes',{event:'*',schema:'public',table:T,filter:`user_id=eq.${uid}`},pl=>{
   const row=pl.new&&pl.new.coll?pl.new:pl.old;if(!row||!row.coll)return;const m=cache.get(row.coll);if(!m)return;
   if(pl.eventType==='DELETE')m.delete(row.id);else m.set(row.id,pl.new.data);emit(row.coll)}).subscribe()}
+// A phone can sleep for hours and miss live updates (for example a Message sync from the Mac). Reload when the app comes back.
+let hiddenAt=0;
+document.addEventListener('visibilitychange',()=>{if(document.hidden){hiddenAt=Date.now();return}if(!uid||!hiddenAt||Date.now()-hiddenAt<60000)return;
+  [...cache.keys()].forEach(c=>loadColl(c).then(m=>{cache.set(c,m);emit(c)}).catch(()=>{}))});
 const db={
   collection(coll){return {
     onSnapshot(cb,onErr){(listeners.get(coll)||listeners.set(coll,[]).get(coll)).push(cb);
