@@ -24,3 +24,4 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .adm-why{margin:0;font-size:14px;color:var(--ink)}
 .adm-sig{background:var(--surface2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.adm-sig img{max-width:100%;max-height:240px;object-fit:contain;border-radius:8px;align-self:flex-start}.adm-sig p{margin:0;font-size:15px;white-space:pre-wrap}
 .adm-meta{font-size:12.5px;color:var(--muted)}.adm-acts{display:flex;gap:8px;flex-wrap:wrap}
+.ct-panel{gap:10px}.ct-list{max-height:48vh;margin:0}.onb-person.have{opacity:.5}.onb-person.have .onb-tick{visibility:hidden}

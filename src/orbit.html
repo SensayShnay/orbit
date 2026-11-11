@@ -414,6 +414,7 @@ details.more .inner{padding-bottom:14px}
 .bands .stat{text-align:left;cursor:pointer;font:inherit;color:inherit}.bands .stat:active{transform:scale(.98)}
 .ap-full{margin:0!important;padding:10px 12px;border-radius:12px;background:color-mix(in srgb,var(--warn) 12%,transparent);color:var(--ink)!important;font-size:13.5px;line-height:1.4;text-align:left!important}.ap-full.soft{background:var(--surface2);color:var(--muted)!important}
 .ap-circ button:disabled{opacity:.4}
+.ap-ct{align-self:center;margin-top:2px}
 @keyframes cmfade{from{opacity:0}to{opacity:1}}
 
 /* ---------- palette, menu, toast ---------- */
@@ -1037,6 +1038,8 @@ function circleOpts(){return customCircles().map(c=>`<option>${esc(c.name)}</opt
 function pausedUntil(){const u=SET.remind.pauseUntil;return u&&u>=TODAY?u:null}
 function setCircles(list){SET.custom={...(SET.custom||{}),circles:list};saveSettings();lastRenderedId=null;if(view==='settings')renderSettings()}
 const IMP={rows:null,src:'',circle:'Friend'};
+window.orbitImportRows=(rows,src)=>{if(!rows||!rows.length)return;IMP.rows=rows;IMP.src=src||'your contacts';if(view!=='settings')setView('settings');else renderSettings();setTimeout(()=>{const el=document.querySelector('.simp');if(el)el.scrollIntoView({behavior:'smooth',block:'center'})},80)};
+window.orbitHasPerson=r=>!!matchExisting(r);window.orbitRoomLeft=()=>roomLeft();
 function normPhone(s){const d=String(s||'').replace(/\D/g,'');return d.length>=10?d.slice(-10):''}
 function parseCSV(t){const rows=[];let row=[],cur='',q=false;for(let i=0;i<t.length;i++){const c=t[i];if(q){if(c==='"'){if(t[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}else if(c==='"')q=true;else if(c===','){row.push(cur);cur=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&t[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur=''}else cur+=c}if(cur||row.length){row.push(cur);rows.push(row)}return rows.filter(r=>r.some(x=>x.trim()))}
 function fromCSV(t){const R=parseCSV(t.replace(/^﻿/,''));if(R.length<2)return [];const H=R[0].map(h=>h.trim().toLowerCase());
@@ -1053,7 +1056,7 @@ function matchExisting(r){const ph=normPhone(r.phone),em=(r.email||'').toLowerCa
   for(const p of people.values()){if(ph&&normPhone(p.phone)===ph)return p;if(em&&(p.email||'').toLowerCase()===em)return p}
   for(const p of people.values()){if(nm&&fullName(p).toLowerCase()===nm)return p}return null}
 function importPlan(){if(!IMP.rows)return null;const add=[],fill=[];IMP.rows.forEach(r=>{const p=matchExisting(r);if(!p){add.push(r);return}const patch={};['nickname','phone','email','city','birthday','job','notes','instagram','whereMet'].forEach(k=>{if(r[k]&&!p[k])patch[k]=r[k]});if(Object.keys(patch).length)fill.push({p,patch})});return {add,fill,same:IMP.rows.length-add.length-fill.length}}
-function importHTML(){const pl=importPlan();if(!pl)return `<label class="sdrop"><input type="file" id="impFile" accept=".csv,.vcf,.json,.txt,text/csv,text/vcard,application/json"><b>Choose a file</b><small>CSV (from Google Contacts, a spreadsheet or an Orbit export), a contacts card file (.vcf, from the Contacts app: select all, then File, Export vCard) or an Orbit JSON export.</small></label>`;
+function importHTML(){const pl=importPlan();if(!pl)return `${window.OrbitContacts&&OrbitContacts.available()?`<button type="button" class="btn primary" data-ct="pick" style="margin-bottom:12px"><svg><use href="#i-plus"/></svg>Pick from my contacts</button><p class="hint" style="margin:0 0 12px">Orbit asks for permission the first time. Only the people you tick are saved.</p>`:''}<label class="sdrop"><input type="file" id="impFile" accept=".csv,.vcf,.json,.txt,text/csv,text/vcard,application/json"><b>Choose a file</b><small>CSV (from Google Contacts, a spreadsheet or an Orbit export), a contacts card file (.vcf, from the Contacts app: select all, then File, Export vCard) or an Orbit JSON export.</small></label>`;
   return `<div class="simp"><p><b>${IMP.rows.length}</b> people in ${esc(IMP.src)}</p>
     <div class="simprow"><div><b>${pl.add.length} new</b><small>${pl.add.slice(0,6).map(r=>esc((r.first+' '+r.last).trim())).join(', ')}${pl.add.length>6?'…':''}</small></div>${pl.add.length?`<label class="sfield"><span>Add them to</span><select id="impCircle">${circleList().map(c=>`<option${c===IMP.circle?' selected':''}>${esc(c)}</option>`).join('')}</select></label><button type="button" class="btn small primary" data-imp="add">Add ${Math.min(pl.add.length,roomLeft())||''}</button>`:''}</div>${pl.add.length>roomLeft()?`<p class="hint">Orbit holds ${MAX_PEOPLE} people and you have room for ${roomLeft()} more, so only the first ${roomLeft()} will be added.</p>`:''}
     <div class="simprow"><div><b>${pl.fill.length} already in Orbit with new details</b><small>Only fills empty fields, never overwrites. ${pl.fill.slice(0,5).map(x=>esc(fullName(x.p))).join(', ')}${pl.fill.length>5?'…':''}</small></div>${pl.fill.length?`<button type="button" class="btn small" data-imp="fill">Fill in ${pl.fill.length}</button>`:''}</div>
@@ -1836,10 +1839,11 @@ function addPerson(){closeAddAsk();const full=roomLeft()<=0;const cities=[...new
     <fieldset class="ap-circ"><legend>Circle <b class="req">*</b></legend><div>${circleList().map(c=>`<button type="button" data-apc="${esc(c)}" aria-pressed="false"${full&&c!==MEM?' disabled':''}>${esc(c)}</button>`).join('')}</div></fieldset>
     ${full?`<p class="ap-full">Your orbit is full at ${MAX_PEOPLE} people. To add someone new, remove someone first. People kept In memory don’t take a spot.</p>`:roomLeft()<=10?`<p class="ap-full soft">${roomLeft()} of ${MAX_PEOPLE} spots left.</p>`:''}
     <p class="ap-msg" role="status"></p>
-    <div class="cmodal-acts"><button class="btn" type="button" id="apNo">Cancel</button><button class="btn primary" type="submit" id="apYes" disabled>Add</button></div></form>`;
+    <div class="cmodal-acts"><button class="btn" type="button" id="apNo">Cancel</button><button class="btn primary" type="submit" id="apYes" disabled>Add</button></div>
+    ${window.OrbitContacts&&OrbitContacts.available()&&!full?`<button type="button" class="more ap-ct" data-ct="pick">Or pick from my contacts</button>`:''}</form>`;
   let circ='';const f=m.querySelector('form'),ok=()=>{const v=m.querySelector('#ap-first').value.trim()&&m.querySelector('#ap-city').value.trim()&&circ;m.querySelector('#apYes').disabled=!v;return v};
   m.addEventListener('input',ok);
-  m.addEventListener('click',ev=>{if(ev.target===m||ev.target.id==='apNo'){closeAddAsk();return}const b=ev.target.closest('[data-apc]');if(b){circ=b.dataset.apc;m.querySelectorAll('[data-apc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));ok()}});
+  m.addEventListener('click',ev=>{if(ev.target===m||ev.target.id==='apNo'||ev.target.closest('[data-ct]')){closeAddAsk();return}const b=ev.target.closest('[data-apc]');if(b){circ=b.dataset.apc;m.querySelectorAll('[data-apc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));ok()}});
   f.addEventListener('submit',async ev=>{ev.preventDefault();if(!ok()){m.querySelector('.ap-msg').textContent='First name, where they live and a circle are needed.';return}
     if(circ!==MEM&&roomLeft()<=0){m.querySelector('.ap-msg').textContent=`Your orbit is full at ${MAX_PEOPLE} people.`;return}
     const id='p-'+Date.now().toString(36);const p={id,first:m.querySelector('#ap-first').value.trim(),last:m.querySelector('#ap-last').value.trim(),city:m.querySelector('#ap-city').value.trim(),circle:circ,years:[THIS_YEAR],touches:[]};

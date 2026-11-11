@@ -20,7 +20,7 @@ const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 ${read('src/shim.css')}${read('src/onboard.css')}${read('src/signals.css')}</style>
 <script>${read('node_modules/@supabase/supabase-js/dist/umd/supabase.js')}</script>
 <script>${read('src/config.js')}</script>
-<script>${read('src/onboard.js')}</script>
+<script>${read('src/contacts.js')}</script><script>${read('src/onboard.js')}</script>
 <script>${read('src/shim.js')}</script>
 </head><body>${app}<script>${read('src/extra.js')}</script><script>${read('src/notify.js')}</script><script>${read('src/signals.js')}</script><script>${read('src/msync.js')}</script><script>${read('src/admin.js')}</script></body></html>`;
 fs.mkdirSync('www', { recursive: true });
