@@ -891,6 +891,9 @@ function renderCounts(){
   const c={people:all.length,reach:reachList().length,sug:liveSugs().length,long:all.filter(p=>p.circle===ORBIT).length,outer:all.filter(p=>p.circle===OUTER).length,inner:all.filter(isInner).length,mem:all.filter(p=>p.circle===MEM).length,drift:dl.length};
   document.querySelectorAll('[data-count]').forEach(e=>{e.textContent=c[e.dataset.count]||'';if(e.dataset.count==='drift')e.classList.toggle('alert',dl.some(isNewDrift))});
   $('brandSub').textContent=`${counted()} of ${MAX_PEOPLE} people`;
+  // Sections that only fill from the owner's message sync stay out of the way until they have something.
+  document.querySelectorAll('.nav[data-view="wrapped"]').forEach(b=>b.hidden=!(meta.wrapped&&meta.wrapped.years));
+  document.querySelectorAll('.nav[data-view="sug"]').forEach(b=>b.hidden=!c.sug);
 }
 function pcard(p,line,when,cls=''){return `<button class="pc ${cls}" type="button" data-id="${esc(p.id)}"><span class="who">${av(p,'sm')}<div><div class="nm">${esc(fullName(p))}</div><div class="meta">${esc(sub(p)||p.circle||'')}</div></div></span>${line?`<span class="why">${esc(line)}</span>`:''}${when?`<span class="when">${esc(when)}</span>`:''}</button>`}
 
@@ -1088,10 +1091,18 @@ function mapPlaces(){const G=geoTable(),pl=new Map(),miss=[],unk=new Map();
     parts.forEach((seg,i)=>{const k=cityKey(seg),g=G[k];if(!g){unk.set(seg,(unk.get(seg)||[]).concat(p));return}
       if(!pl.has(k))pl.set(k,{k,name:g[2]||seg,ll:[g[1],g[0]],ppl:[]});pl.get(k).ppl.push({p,primary:i===0})})});
   return {places:[...pl.values()],miss,unk}}
-const MAP_VIEWS={world:null,us:[[-125,24],[-66,50]],ne:[[-80.5,38.3],[-69,45.6]],hv:[[-74.75,41.35],[-73.25,42.45]]};
+const MAP_VIEWS={world:null,us:[[-125,24],[-66,50]]};
+// Zoom buttons follow the owner's home city: World, their country (USA for now), the region around home, and home itself.
+function homeLL(){const c=SET.profile.city||'';if(!c)return null;const g=geoTable()[cityKey(c)];return g?[g[1],g[0]]:null}
+function mapButtons(){const h=homeLL(),city=(SET.profile.city||'').split(',')[0].trim();const out=[['world','World']];
+  if(h){const inUS=h[0]>-125&&h[0]<-66&&h[1]>24&&h[1]<50;if(inUS)out.push(['us','USA']);
+    MAP_VIEWS.region=[[h[0]-5.5,h[1]-3.7],[h[0]+5.5,h[1]+3.7]];out.push(['region',inUS&&h[0]>-81&&h[1]>38?'Northeast':'Region']);
+    MAP_VIEWS.home=[[h[0]-.75,h[1]-.55],[h[0]+.75,h[1]+.55]];out.push(['home',city||'Home'])}
+  else if(SET.profile.city){const u=new Map([[SET.profile.city,[]]]);fillGeo(u)}
+  return out}
 function renderMap(){
   if(builtFor!=='map'){builtFor='map';mapSel=null;
-    $('view').innerHTML=`<div class="mapbar"><div class="ozseg" role="group" aria-label="Zoom to">${[['world','World'],['us','USA'],['ne','Northeast'],['hv','Hudson Valley']].map(([k,l])=>`<button type="button" data-mz="${k}" aria-pressed="${k==='world'}">${l}</button>`).join('')}</div>
+    $('view').innerHTML=`<div class="mapbar"><div class="ozseg" role="group" aria-label="Zoom to">${mapButtons().map(([k,l])=>`<button type="button" data-mz="${k}" aria-pressed="${k==='world'}">${l}</button>`).join('')}</div>
       <select class="f" id="mapCircle" aria-label="Circle"><option value="">Everyone</option><option value="__active">Friends + family</option><option value="__inner">Inner sphere</option><option>Friend</option><option>Family</option>${circleOpts()}<option>Outer Orbit</option><option>In memory</option></select></div>
       <div class="mapwrap" id="mapWrap"><svg id="mapSvg" role="img" aria-label="World map of where your people live"></svg><div class="maploading" id="mapLoading">Loading the map…</div><div class="mapzbtns"><button type="button" data-mzs="1.6" aria-label="Zoom in">+</button><button type="button" data-mzs="0.625" aria-label="Zoom out">−</button></div></div>
       <div id="mapList"></div>`;
@@ -1146,7 +1157,7 @@ function mapZoomTo(key){document.querySelectorAll('[data-mz]').forEach(b=>b.setA
   if(!b){svg.transition().duration(700).call(zoom.transform,d3.zoomIdentity);return}
   const p0=proj([b[0][0],b[1][1]]),p1=proj([b[1][0],b[0][1]]),k=Math.min(600,.92/Math.max((p1[0]-p0[0])/w,(p1[1]-p0[1])/h)),cx=(p0[0]+p1[0])/2,cy=(p0[1]+p1[1])/2;
   svg.transition().duration(900).call(zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-cx,-cy))}
-function mapFocus(P){const {svg,zoom,proj,w,h,t}=mapState;const [x,y]=proj(P.ll);const k=Math.max(t.k,P.k&&/hudson|kingston|woodstock/.test(P.k)?60:12);svg.transition().duration(800).call(zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-x,-y))}
+function mapFocus(P){const {svg,zoom,proj,w,h,t}=mapState;const [x,y]=proj(P.ll);const hm=homeLL();const near=hm&&Math.hypot(P.ll[0]-hm[0],P.ll[1]-hm[1])<1.2;const k=Math.max(t.k,near?60:12);svg.transition().duration(800).call(zoom.transform,d3.zoomIdentity.translate(w/2,h/2).scale(k).translate(-x,-y))}
 let mapRaf=0;
 function moveMapMarkers(){if(!mapState)return;const {mk,proj,t}=mapState;mk.selectAll('g.mpin').attr('transform',function(){const ll=this.__ll;if(!ll)return this.getAttribute('transform');const [x,y]=t.apply(proj(ll));return `translate(${x},${y})`})}
 function drawMapMarkers(){if(!mapState)return;const {mk,proj,t}=mapState;const {places}=mapPlaces();
@@ -1171,7 +1182,7 @@ async function fillGeo(unk){if(geoBusy||!db)return;const todo=[...unk.keys()].fi
       try{const r=await fetch('https://geocoding-api.open-meteo.com/v1/search?count=8&language=en&name='+encodeURIComponent(name));const j=await r.json();const res=(j&&j.results)||[];
         const hit=(want&&res.find(x=>[x.admin1,x.country,x.country_code].some(v=>v&&String(v).toLowerCase().includes(want))))||res.sort((a,b)=>(b.population||0)-(a.population||0))[0];
         if(hit)add[k]=[+hit.latitude.toFixed(4),+hit.longitude.toFixed(4),hit.name]}catch(_){}}
-    if(Object.keys(add).length){const cur=geoTable();meta.geo={...(meta.geo||{}),cities:{...cur,...add}};await db.doc('meta/geo').set(meta.geo);if(view==='map')renderMap()}}
+    if(Object.keys(add).length){const cur=geoTable();meta.geo={...(meta.geo||{}),cities:{...cur,...add}};await db.doc('meta/geo').set(meta.geo);if(view==='map'){const seg=document.querySelector('.mapbar .ozseg');if(seg)seg.innerHTML=mapButtons().map(([k,l])=>`<button type="button" data-mz="${k}" aria-pressed="${k==='world'}">${l}</button>`).join('');renderMap()}}}
   finally{geoBusy=false}}
 function mapListHTML(){const el=$('mapList');if(!el)return;const {places,miss,unk}=mapPlaces();if(unk.size)fillGeo(unk);
   const tot=places.reduce((a,P)=>a+P.ppl.filter(x=>x.primary).length,0);
@@ -1801,7 +1812,7 @@ function closePal(){$('pal').hidden=true}
 function palRender(){
   const q=$('palQ').value.trim().toLowerCase();
   const ppl=[...people.values()].map(p=>{const n=fullName(p).toLowerCase()+' '+(p.nickname||'').toLowerCase();const sc=!q?0:n.startsWith(q)?3:n.includes(q)?2:haystack(p).includes(q)?1:-1;return {p,sc}}).filter(x=>q?x.sc>0:true).sort((a,b)=>b.sc-a.sc||(lastSeen(b.p)||'').localeCompare(lastSeen(a.p)||'')).slice(0,q?9:6);
-  const cmds=CMDS.filter(c=>!q||c[1].toLowerCase().includes(q));
+  const cmds=CMDS.filter(c=>(!q||c[1].toLowerCase().includes(q))&&!(c[0]==='wrapped'&&!(meta.wrapped&&meta.wrapped.years))&&!(c[0]==='sug'&&!liveSugs().length));
   palItems=[...ppl.map(x=>({t:'p',id:x.p.id,html:`${av(x.p,'sm')}<span style="min-width:0"><span class="nm" style="display:block">${esc(fullName(x.p))}</span><span class="meta" style="display:block">${esc(sub(x.p)||x.p.circle||'')}</span></span><span class="k">${esc(ago(lastSeen(x.p)))}</span>`})),...cmds.map(c=>({t:'v',id:c[0],html:`<span class="ico"><svg><use href="#i-${c[2]}"/></svg></span><span>${c[1]}</span><span class="k">section</span>`}))];
   if(!q||'add a person new'.includes(q))palItems.push({t:'a',html:`<span class="ico"><svg><use href="#i-plus"/></svg></span><span>Add a person</span>`});
   palSel=Math.min(palSel,Math.max(0,palItems.length-1));

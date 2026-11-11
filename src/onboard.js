@@ -26,7 +26,7 @@ function head(step,backTo){return `<div class="onb-top">${backTo?`<button type="
 function screen(html){const r=mount();r.innerHTML=`<div class="onb-screen">${html}</div>`;r.scrollTop=0;const f=r.querySelector('[autofocus]');if(f)setTimeout(()=>f.focus(),50);return r}
 
 // ---------- signed out: welcome, create account, sign in ----------
-let SB=null;
+let SB=null;const RESET_URL='https://sensayshnay.github.io/orbit/reset.html';
 function welcome(){screen(`<div class="onb-hero">${LOGO}<h1 class="onb-big">Orbit</h1><p class="onb-lede">Stay close to the people who matter, before anyone drifts away.</p></div>
  <div class="onb-card"><div class="onb-li">${ICON.lock}<span>Your sphere is private. Only you can see it.</span></div><div class="onb-li">${ICON.chat}<span>We never read your messages. At most, who and when.</span></div><div class="onb-li">${ICON.trash}<span>Delete your account and data anytime.</span></div></div>
  <div class="onb-grow"></div><button type="button" class="onb-cta" data-go="create">Get started</button><button type="button" class="onb-link" data-go="signin">I already have an account</button>`)}
@@ -39,7 +39,13 @@ function authForm(mode){const up=mode==='create';screen(`${up?head(2,'welcome'):
   ${up?`<label class="onb-check"><input type="checkbox" name="agree"><span>I agree to the <button type="button" class="onb-inline" data-show="terms">Terms</button> and <button type="button" class="onb-inline" data-show="privacy">Privacy Policy</button></span></label>`:''}
   <p class="onb-msg" role="status"></p>
   <button type="submit" class="onb-cta">${up?'Create account':'Sign in'}</button>
+  ${up?'':'<button type="button" class="onb-link" id="onbForgot">Forgot your password?</button>'}
  </form>`);
+ const fg=root.querySelector('#onbForgot');if(fg)fg.onclick=async()=>{const f=root.querySelector('#onbAuth'),msg=root.querySelector('.onb-msg'),email=f.email.value.trim();
+  if(!email){msg.textContent='Type your email above first, then tap Forgot your password.';f.email.focus();return}
+  fg.disabled=true;msg.textContent='Sending…';
+  const r=await SB.auth.resetPasswordForEmail(email,{redirectTo:RESET_URL});fg.disabled=false;
+  msg.textContent=r.error?('Couldn’t send that: '+r.error.message):'Check your email for a link to set a new password. It opens a page where you type a new one, then come back here and sign in.'};
  const f=root.querySelector('#onbAuth'),msg=root.querySelector('.onb-msg');
  f.onsubmit=async e=>{e.preventDefault();const email=f.email.value.trim(),password=f.pw.value;
   if(up&&!f.agree.checked){msg.textContent='Please agree to the Terms and Privacy Policy.';return}

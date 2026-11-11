@@ -11,7 +11,8 @@ swap('Your Orbit is private to your Claude account.</p></section>',
 swap('<meta name="claude:viewport-fit-sides" content="cover">', '');
 // invite button on each person's card, and an Invite card in Settings
 swap("${a(p.email?'mailto:'+p.email:'','mail','Email')}</div>", "${a(p.email?'mailto:'+p.email:'','mail','Email')}</div><button type=\"button\" class=\"invbar\" data-orbit=\"invite\" data-pid=\"${esc(p.id)}\" data-first=\"${esc(p.first||'')}\" data-phone=\"${e164?'+'+e164:''}\"><svg><use href=\"#i-gift\"/></svg>${p.invitedAt?'Invited to Orbit · send again':'Invite '+esc(p.first||'them')+' to Orbit'}</button>");
-swap('<section class="scard"><h3>About Orbit</h3>', '<section class="scard" id="msyncCard"></section><section class="scard"><h3>Invite friends</h3><p class="lede">Every friend gets your code, so you can see who joined through you.</p><p id="orbitInviteInfo" style="margin:8px 0 12px">Loading your code…</p><button type="button" class="btn small primary" data-orbit="invite">Share an invite</button></section><section class="scard"><h3>About Orbit</h3>');
+swap('<section class="scard"><h3>About Orbit</h3>', '<section class="scard" id="reportsCard" hidden></section><section class="scard" id="msyncCard"></section><section class="scard"><h3>Invite friends</h3><p class="lede">Every friend gets your code, so you can see who joined through you.</p><p id="orbitInviteInfo" style="margin:8px 0 12px">Loading your code…</p><button type="button" class="btn small primary" data-orbit="invite">Share an invite</button></section><section class="scard"><h3>About Orbit</h3>');
+swap('<div id="signalRow"></div>', '<div id="adminBar"></div><div id="signalRow"></div>');
 const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#0c0f1f">
@@ -21,7 +22,9 @@ ${read('src/shim.css')}${read('src/onboard.css')}${read('src/signals.css')}</sty
 <script>${read('src/config.js')}</script>
 <script>${read('src/onboard.js')}</script>
 <script>${read('src/shim.js')}</script>
-</head><body>${app}<script>${read('src/extra.js')}</script><script>${read('src/notify.js')}</script><script>${read('src/signals.js')}</script><script>${read('src/msync.js')}</script></body></html>`;
+</head><body>${app}<script>${read('src/extra.js')}</script><script>${read('src/notify.js')}</script><script>${read('src/signals.js')}</script><script>${read('src/msync.js')}</script><script>${read('src/admin.js')}</script></body></html>`;
 fs.mkdirSync('www', { recursive: true });
+// The hosted password-reset page needs the same public config.
+fs.writeFileSync('docs/config.js', read('src/config.js'));
 fs.writeFileSync('www/index.html', html);
 console.log('Built www/index.html', (html.length / 1e6).toFixed(2) + 'MB');
