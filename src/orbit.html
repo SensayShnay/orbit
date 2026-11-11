@@ -824,7 +824,7 @@ document.addEventListener('click',e=>{if(view!=='rems')return;const d=e.target.c
   else{save(p.id,{remind:{...p.remind,snooze:remAdd(TODAY,7)}},true);toast('Snoozed a week')}
   renderRems()},true);
 function nextBirthday(p){if(!p.birthday)return null;const [,m,d]=p.birthday.split('-').map(Number);if(!m||!d)return null;const t0=new Date(NOW.getFullYear(),NOW.getMonth(),NOW.getDate());let nb=new Date(THIS_YEAR,m-1,d);if(nb<t0)nb=new Date(THIS_YEAR+1,m-1,d);return {date:nb,days:Math.round((nb-t0)/864e5)}}
-function haystack(p){const pr=profiles.get(p.id);return (pr?[pr.summary,(pr.facts||[]).join(' '),(pr.followUps||[]).join(' ')].join(' ').toLowerCase()+' ':'')+Object.entries(p).filter(([k])=>!/Stats$/.test(k)).map(([,v])=>Array.isArray(v)?v.map(x=>typeof x==='object'?Object.values(x).join(' '):x).join(' '):v).join(' ').toLowerCase()}
+function haystack(p){const pr=profiles.get(p.id);return (pr?[pr.summary,(pr.facts||[]).join(' '),(pr.followUps||[]).join(' ')].join(' ').toLowerCase()+' ':'')+Object.entries(p).filter(([k])=>!/Stats$/.test(k)&&k!=='links'&&k!=='id'&&k!=='photo').map(([,v])=>Array.isArray(v)?v.map(x=>typeof x==='object'?Object.values(x).join(' '):x).join(' '):v).join(' ').toLowerCase()}
 const PHOTO_RE=/^[0-9a-f]{32}$/;
 const av=(p,size='')=>`<span class="av ${size} ${circleCls(p)}" style="--h:${hash(p.id||p.first)%360}">${esc(initials(p))}${p.photo&&PHOTO_RE.test(p.photo)?`<img src="/_blob/${p.photo}" alt="" loading="lazy" onerror="this.remove()">`:''}</span>`;
 let DRIFT_DAYS=182, REACH_DAYS=90, BDAY_DAYS=60;
@@ -1402,6 +1402,8 @@ function filtered(){
   const inTab=view==='long'?(p=>p.circle===ORBIT):view==='mem'?(p=>p.circle===MEM):view==='outer'?(p=>p.circle===OUTER):(()=>true);
   let arr=[...people.values()].filter(p=>inTab(p)&&(!fc||(fc==='__active'?isActive(p):fc==='__inner'?isInner(p):ROLES.includes(fc)?p.role===fc:p.circle===fc))&&(!q||haystack(p).includes(q))&&(!fy||(p.years||[]).includes(+fy))&&(!fm||p.whereMet===fm)&&(!fct||(fct==='__none'?!String(p.city||'').trim():region(p.city)===fct)));
   const byName=(a,b)=>fullName(a).localeCompare(fullName(b));
+  // When searching, people whose name matches come first, then nickname matches, then everyone else.
+  if(q){const rank=p=>{const n=fullName(p).toLowerCase(),nk=(p.nickname||'').toLowerCase();return n.startsWith(q)?0:n.split(/\s+/).some(w=>w.startsWith(q))?1:n.includes(q)||nk.includes(q)?2:3};arr.sort((a,b)=>rank(a)-rank(b)||byName(a,b));return arr}
   if(s==='touch')arr.sort((a,b)=>(lastSeen(a)||'').localeCompare(lastSeen(b)||'')||byName(a,b));
   else if(s==='recent')arr.sort((a,b)=>(lastSeen(b)||'').localeCompare(lastSeen(a)||'')||byName(a,b));
   else if(s==='msgs')arr.sort((a,b)=>msgCount(b)-msgCount(a)||byName(a,b));
