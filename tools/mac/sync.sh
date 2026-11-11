@@ -60,6 +60,8 @@ create temp table e as
   $WA_PART;
 alter table e add column d text; update e set d=date(ts,'unixepoch','localtime');
 create index temp.e_i on e(cid,k);
+select 'diag: handles from Orbit '||(select count(*) from h)||', Messages handle rows '||(select count(*) from hd)||', of which match your sphere '||(select count(distinct hd.rid) from hd join h on h.hn=hd.hn)||' ('||(select count(distinct h.cid) from hd join h on h.hn=hd.hn)||' people), 1-on-1 chats '||(select count(*) from solo)||', message rows counted '||(select count(*) from e)||' for '||(select count(distinct cid) from e)||' people';
+select 'diag: sample unmatched sphere handles: '||(select group_concat(substr(hn,1,4)||'…'||substr(hn,-3), ' ') from (select hn from h where hn not in (select hn from hd) limit 8));
 with yr as (select cid, k, json_group_object(y,n) j from (select cid, k, substr(d,1,4) y, count(*) n from e group by 1,2,3) group by 1,2),
 mo as (select cid, k, json_group_object(m, json_array(n,l)) j from (select cid, k, substr(d,1,7) m, count(*) n, max(d) l from e where ts > cast(strftime('%s','now') as integer)-365*86400 group by 1,2,3) group by 1,2),
 tot as (select cid, k, count(*) n, sum(me) s, min(d) f, max(d) l from e group by 1,2),
@@ -67,7 +69,9 @@ per as (select tot.cid, json_group_object(tot.k, json_object('count',tot.n,'sent
           'syncedAt',date('now','localtime'),'_months',json(coalesce(mo.j,'{}')))) j
         from tot join yr on yr.cid=tot.cid and yr.k=tot.k left join mo on mo.cid=tot.cid and mo.k=tot.k group by tot.cid)
 select json_object('kind','stats','payload',coalesce((select json_group_object(cid,json(j)) from per),json('{}')));
-" > "$TMP/stats.json" 2> "$TMP/err.txt"
+" > "$TMP/out.txt" 2> "$TMP/err.txt"
+grep "^diag:" "$TMP/out.txt" | sed "s/^diag: //" | while read -r l; do say "$l"; done
+grep -v "^diag:" "$TMP/out.txt" > "$TMP/stats.json"
 if [ ! -s "$TMP/stats.json" ]; then status false read_error; echo "$(date) Couldn't read Messages: $(head -c 300 "$TMP/err.txt")"; exit 5; fi
 PEOPLE="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload'));" 2>/dev/null)"
 NI="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload')) where json_extract(value,'\$.textStats') is not null;" 2>/dev/null)"
