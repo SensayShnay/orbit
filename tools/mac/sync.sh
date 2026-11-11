@@ -37,24 +37,30 @@ say "Counting messages per person (this can take a minute on a big Messages hist
 WA_PART=""
 if [ "$HAVE_WA" = 1 ]; then WA_PART="
   union all
-  select h.cid, ev.ts, ev.me, 'whatsappStats' k from (
+  select h.cid, 'whatsappStats' k, ev.ts, ev.me from (
     select case when length(d)=10 then '+1'||d else '+'||d end hn, m.ZMESSAGEDATE+978307200 ts, coalesce(m.ZISFROMME,0) me
     from (select Z_PK, substr(ZCONTACTJID,1,instr(ZCONTACTJID,'@')-1) d from wa.ZWACHATSESSION where ZSESSIONTYPE=0 and ZCONTACTJID like '%@s.whatsapp.net') s
     join wa.ZWAMESSAGE m on m.ZCHATSESSION=s.Z_PK where coalesce(m.ZMESSAGETYPE,0) not in (6,10)) ev join h on h.hn=ev.hn"; fi
 ATTACH=""; [ "$HAVE_WA" = 1 ] && ATTACH="attach database '$TMP/wa.db' as wa;"
 cd "$TMP" || exit 4
 "$SQL" -bail -batch -noheader chat.db "$ATTACH
-with h as (select json_extract(value,'\$.h') hn, json_extract(value,'\$.c') cid from json_each(readfile('handles.json'))),
-hd as (select ROWID rid, case when instr(id,'@')>0 then lower(trim(id))
+pragma temp_store=memory;
+create temp table h as select json_extract(value,'\$.h') hn, json_extract(value,'\$.c') cid from json_each(readfile('handles.json'));
+create index temp.h_hn on h(hn);
+create temp table hd as select ROWID rid, case when instr(id,'@')>0 then lower(trim(id))
          else (case when length(d)=10 then '+1'||d else '+'||d end) end hn
-       from (select ROWID, id, replace(replace(replace(replace(replace(replace(id,' ',''),'-',''),'(',''),')',''),'+',''),'.','') d from handle)),
-solo as (select chat_id from chat_handle_join group by chat_id having count(*)=1),
-ev as (select h.cid, (case when m.date>100000000000 then m.date/1000000000.0 else m.date end)+978307200 ts, coalesce(m.is_from_me,0) me, 'textStats' k
+       from (select ROWID, id, replace(replace(replace(replace(replace(replace(id,' ',''),'-',''),'(',''),')',''),'+',''),'.','') d from handle);
+create temp table solo as select chat_id from chat_handle_join group by chat_id having count(*)=1;
+create index temp.solo_c on solo(chat_id);
+-- one pass over the message history: only handle, date and who sent it
+create temp table e as
+  select h.cid, 'textStats' k, (case when m.date>100000000000 then m.date/1000000000.0 else m.date end)+978307200 ts, coalesce(m.is_from_me,0) me
   from message m join chat_message_join cmj on cmj.message_id=m.ROWID join solo on solo.chat_id=cmj.chat_id
   join chat_handle_join chj on chj.chat_id=cmj.chat_id join hd on hd.rid=chj.handle_id join h on h.hn=hd.hn
-  $WA_PART),
-e as (select cid, k, ts, me, date(ts,'unixepoch','localtime') d from ev),
-yr as (select cid, k, json_group_object(y,n) j from (select cid, k, strftime('%Y',d) y, count(*) n from e group by 1,2,3) group by 1,2),
+  $WA_PART;
+alter table e add column d text; update e set d=date(ts,'unixepoch','localtime');
+create index temp.e_i on e(cid,k);
+with yr as (select cid, k, json_group_object(y,n) j from (select cid, k, substr(d,1,4) y, count(*) n from e group by 1,2,3) group by 1,2),
 mo as (select cid, k, json_group_object(m, json_array(n,l)) j from (select cid, k, substr(d,1,7) m, count(*) n, max(d) l from e where ts > cast(strftime('%s','now') as integer)-365*86400 group by 1,2,3) group by 1,2),
 tot as (select cid, k, count(*) n, sum(me) s, min(d) f, max(d) l from e group by 1,2),
 per as (select tot.cid, json_group_object(tot.k, json_object('count',tot.n,'sent',tot.s,'first',tot.f,'last',tot.l,'byYear',json(yr.j),

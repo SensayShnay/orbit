@@ -63,7 +63,8 @@ runsync() {  # launch the helper and follow its log for up to 3 minutes
 for try in 1 2 3; do
   printf 'Press Enter when the switch is on... '; read -r _ < /dev/tty
   say "Syncing now..."
-  runsync
+  runsync; rc=$?
+  if [ "$rc" = 2 ]; then say ""; say "${b}Almost there.${n} The first sync is still counting your message history in the background (big histories take a few minutes)."; say "You can close this window. Orbit > Settings > Message sync will say \"Working\" once it finishes, and it runs on its own twice a day from now on."; exit 0; fi
   last="$(tail -n 1 "$LOG" 2>/dev/null)"
   case "$last" in
     *Synced*) say ""; say "${b}All set.${n} ${last#* }"; say "Orbit will now update on its own twice a day. Check Orbit > Settings > Message sync to see it."; exit 0;;
