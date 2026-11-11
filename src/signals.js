@@ -101,7 +101,7 @@ function connsSheet(){const inc=conns.filter(c=>c.status==='pending'&&c.directio
   const d=sheet(`<div class="sg-top"><h3>Connections</h3><button type="button" class="sg-x" data-sg="close" aria-label="Close">✕</button></div>
    <form class="sg-connect" id="sgReq"><label for="sgWho">Connect with someone on Orbit</label><div><input id="sgWho" class="sg-input" placeholder="Their email or invite code" autocomplete="off" autocapitalize="off"><button type="submit">Send</button></div><p class="sg-msg" role="status"></p></form>
    ${inc.length?`<h4>Requests</h4><ul class="sg-list">${inc.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34,c.photo)}${esc(c.name)}</span><span class="sg-acts"><button type="button" data-acc="${esc(c.user_id)}" class="sg-mini primary">Accept</button><button type="button" data-dec="${esc(c.user_id)}" class="sg-mini">Decline</button></span></li>`).join('')}</ul>`:''}
-   <h4>Connected <small>${ok.length}</small></h4>${ok.length?`<ul class="sg-list">${ok.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34,c.photo)}${esc(c.name)}${c.source==='invite'?' <small>joined with an invite</small>':''}</span><span class="sg-acts"><button type="button" data-rm="${esc(c.user_id)}" class="sg-mini">Remove</button></span></li>`).join('')}</ul>`:'<p class="sg-note">Nobody yet. Friends who join with your invite code connect automatically.</p>'}
+   <h4>Connected <small>${ok.length}</small></h4>${ok.length?`<p class="sg-note" style="margin:0 0 4px">Tap someone to open their card, or add them to your sphere.</p><ul class="sg-list">${ok.map(c=>{const has=window.orbitFindByUser&&orbitFindByUser(c.user_id);return `<li><button type="button" class="sg-who sg-open" data-cuser="${esc(c.user_id)}" data-cname="${esc(c.name)}">${avatar(c.name,c.user_id,34,c.photo)}<span>${esc(c.name)}<small>${has?'In your sphere':'Not in your sphere yet · tap to add'}</small></span></button><span class="sg-acts"><button type="button" data-rm="${esc(c.user_id)}" class="sg-mini" aria-label="Remove connection">Remove</button></span></li>`}).join('')}</ul>`:'<p class="sg-note">Nobody yet. Friends who join with your invite code connect automatically.</p>'}
    ${out.length?`<h4>Waiting on them</h4><ul class="sg-list">${out.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34,c.photo)}${esc(c.name)}</span><small>Request sent</small></li>`).join('')}</ul>`:''}
    <button type="button" class="sg-ghost wide" data-orbit="invite">Invite someone new</button>`,'');
   d.querySelector('#sgReq').onsubmit=async e=>{e.preventDefault();const v=d.querySelector('#sgWho').value.trim(),m=d.querySelector('#sgReq .sg-msg');if(!v)return;
@@ -111,11 +111,30 @@ function connsSheet(){const inc=conns.filter(c=>c.status==='pending'&&c.directio
   sb().rpc('my_blocks').then(r=>{const bl=(r&&r.data)||[];if(!bl.length||!document.body.contains(d))return;const w=document.createElement('div');
     w.innerHTML=`<h4>Blocked <small>${bl.length}</small></h4><ul class="sg-list">${bl.map(c=>`<li><span class="sg-who">${avatar(c.name,c.user_id,34)}${esc(c.name)}</span><span class="sg-acts"><button type="button" data-unb="${esc(c.user_id)}" class="sg-mini">Unblock</button></span></li>`).join('')}</ul>`;
     d.querySelector('.sg-panel').appendChild(w)},()=>{});
+  d.addEventListener('click',e=>{const w=e.target.closest('[data-cuser]');if(!w)return;e.stopPropagation();openConnection(w.dataset.cuser,w.dataset.cname)});
   d.addEventListener('click',async e=>{const u=e.target.closest('[data-unb]');if(u){u.disabled=true;await sb().rpc('unblock_user',{p_other:u.dataset.unb});toast('Unblocked. Send a request to connect again');connsSheet();return}
     const a=e.target.closest('[data-acc],[data-dec],[data-rm]');if(!a)return;const id=a.dataset.acc||a.dataset.dec||a.dataset.rm;
     if(a.dataset.rm&&!confirm('Remove this connection? You’ll stop seeing each other’s signals.'))return;
     await sb().rpc('respond_connection',{p_other:id,p_accept:!!a.dataset.acc});toast(a.dataset.acc?'Connected':'Done');await load(true);connsSheet()})}
 
+// Tapping a connection: open their card, or offer to link an existing card / make a new one.
+function openConnection(uid,name){const has=window.orbitFindByUser&&orbitFindByUser(uid);
+  if(has){closeSheet();if(window.orbitOpenPerson)orbitOpenPerson(has);return}
+  const parts=String(name||'').trim().split(/\s+/),first=parts[0]||'',last=parts.slice(1).join(' ');
+  const list=(window.orbitPeopleList?orbitPeopleList():[]),nl=name.toLowerCase(),fl=first.toLowerCase();
+  const score=p=>p.name.toLowerCase()===nl?3:p.first.toLowerCase()===fl&&(!last||p.last.toLowerCase().startsWith(last.toLowerCase().slice(0,3)))?2:p.first.toLowerCase()===fl?1:0;
+  const sorted=list.slice().sort((a,b)=>score(b)-score(a)||a.name.localeCompare(b.name)),best=sorted[0]&&score(sorted[0])>=2?sorted[0]:null;
+  const d=sheet(`<div class="sg-top"><h3>${esc(name)}</h3><button type="button" class="sg-x" data-sg="close" aria-label="Close">✕</button></div>
+   <p class="sg-note">${esc(first||name)} is connected with you on Orbit but isn’t in your sphere yet.${best?` Looks like you might already have a card for them.`:''}</p>
+   ${best?`<button type="button" class="sg-cta" data-cm="link" data-id="${esc(best.id)}">Yes, that’s ${esc(best.name)}${best.city?' · '+esc(best.city):''}</button>`:''}
+   <button type="button" class="${best?'sg-ghost wide':'sg-cta'}" data-cm="new">${best?'No, make a new card':'Add '+esc(first||name)+' to my sphere'}</button>
+   <details class="sg-pickwrap"><summary>${best?'Link to a different card':'Link to a card I already have'}</summary>
+    <select class="sg-input" id="cmSel" aria-label="Card to link"><option value="">Pick a card…</option>${sorted.map(p=>`<option value="${esc(p.id)}">${esc(p.name)}${p.city?' · '+esc(p.city):''}${p.linked?' (linked to someone else)':''}</option>`).join('')}</select>
+    <button type="button" class="sg-ghost wide" data-cm="linksel">Link this card</button></details>`,'sg-top-layer');
+  d.addEventListener('click',e=>{const b=e.target.closest('[data-cm]');if(!b)return;const a=b.dataset.cm;
+    if(a==='new'){closeSheet();if(window.orbitAddPerson)orbitAddPerson({first,last,orbitUser:uid});return}
+    const id=a==='link'?b.dataset.id:(d.querySelector('#cmSel')||{}).value;if(!id){toast('Pick a card first');return}
+    if(window.orbitLinkUser)orbitLinkUser(id,uid);closeSheet();toast('Linked');if(window.orbitOpenPerson)orbitOpenPerson(id)})}
 document.addEventListener('click',e=>{const t=e.target.closest('[data-sg]');if(!t)return;const a=t.dataset.sg;
   if(a==='compose'){e.preventDefault();compose()}else if(a==='view'){e.preventDefault();view(t.dataset.uid)}else if(a==='conns'){e.preventDefault();connsSheet()}});
 // fill the row whenever Home renders, refresh now and then

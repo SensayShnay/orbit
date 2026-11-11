@@ -1524,7 +1524,7 @@ function renderDetail(){
   d.innerHTML=`
     <div class="shero"><button class="ibtn x" type="button" id="closeD" aria-label="Close"><svg><use href="#i-x"/></svg></button>
       <div class="id"><span class="avwrap">${av(p,'lg')}${assetsNs?`<label class="camb" title="${p.photo?'Change photo':'Add a photo'}"><svg><use href="#i-cam"/></svg><input type="file" accept="image/*" id="photoIn" aria-label="${p.photo?'Change photo':'Add a photo'}"></label>`:''}</span><div style="min-width:0"><h2>${esc(fullName(p))}</h2>
-        <div class="chips">${isInner(p)?`<span class="pill inner">Inner sphere</span>`:''}<span class="pill ${p.circle===ORBIT?'orbit':p.circle===MEM?'mem':p.circle===OUTER?'outer':p.circle==='Family'?'fam':''}"${customColor(p.circle)?` style="color:${esc(customColor(p.circle))};background:color-mix(in srgb,${esc(customColor(p.circle))} 16%,transparent)"`:''}>${esc(p.circle||'Friend')}${p.circle===OUTER&&p.role?' · '+esc(p.role):''}</span>${p.yearMet?`<span class="pill">since ${esc(p.yearMet)}</span>`:''}${statusPill(p)}${zodiac(p)?`<span class="pill" title="Zodiac sign">${zodiac(p)[1]} ${zodiac(p)[0]}</span>`:''}${bd&&bd.days<=60?`<span class="pill" style="color:var(--accent)">🎂 ${bd.days===0?'today':'in '+bd.days+'d'}</span>`:''}</div>
+        <div class="chips">${p.orbitUser?`<span class="pill" title="Connected with you on Orbit" style="color:var(--inner)">● On Orbit</span>`:''}${isInner(p)?`<span class="pill inner">Inner sphere</span>`:''}<span class="pill ${p.circle===ORBIT?'orbit':p.circle===MEM?'mem':p.circle===OUTER?'outer':p.circle==='Family'?'fam':''}"${customColor(p.circle)?` style="color:${esc(customColor(p.circle))};background:color-mix(in srgb,${esc(customColor(p.circle))} 16%,transparent)"`:''}>${esc(p.circle||'Friend')}${p.circle===OUTER&&p.role?' · '+esc(p.role):''}</span>${p.yearMet?`<span class="pill">since ${esc(p.yearMet)}</span>`:''}${statusPill(p)}${zodiac(p)?`<span class="pill" title="Zodiac sign">${zodiac(p)[1]} ${zodiac(p)[0]}</span>`:''}${bd&&bd.days<=60?`<span class="pill" style="color:var(--accent)">🎂 ${bd.days===0?'today':'in '+bd.days+'d'}</span>`:''}</div>
         ${sub(p)?`<div class="meta" style="margin-top:6px;white-space:normal">${esc(sub(p))}</div>`:''}</div></div>
       ${quickHTML(p)}</div>
     <div class="dbody">
@@ -1829,12 +1829,13 @@ $('palQ').addEventListener('keydown',e=>{if(e.key==='ArrowDown'){palSel=Math.min
 $('pal').addEventListener('click',e=>{if(e.target.id==='pal')closePal();const b=e.target.closest('[data-pi]');if(b)palGo(+b.dataset.pi)});
 
 // ---------- events ----------
-function addPerson(){closeAddAsk();const full=roomLeft()<=0;const cities=[...new Set([...people.values()].map(p=>(p.city||'').trim()).filter(Boolean))].sort();
+function addPerson(pre){pre=pre||{};closeAddAsk();const full=roomLeft()<=0;const cities=[...new Set([...people.values()].map(p=>(p.city||'').trim()).filter(Boolean))].sort();
   const m=document.createElement('div');m.id='addModal';m.className='cmodal';
   m.innerHTML=`<form class="cmodal-box addp" role="dialog" aria-modal="true" aria-labelledby="addT" novalidate>
     <h3 id="addT">Add someone</h3><p>A few basics so they show up in the right place.</p>
-    <label class="sfield"><span>First name <b class="req">*</b></span><input id="ap-first" autocomplete="off" autocapitalize="words" required></label>
-    <label class="sfield"><span>Last name</span><input id="ap-last" autocomplete="off" autocapitalize="words"></label>
+    ${pre.orbitUser?`<p class="ap-full soft">${esc(pre.first||'They')} is connected with you on Orbit. This card will be linked to their account.</p>`:''}
+    <label class="sfield"><span>First name <b class="req">*</b></span><input id="ap-first" autocomplete="off" autocapitalize="words" required value="${esc(pre.first||'')}"></label>
+    <label class="sfield"><span>Last name</span><input id="ap-last" autocomplete="off" autocapitalize="words" value="${esc(pre.last||'')}"></label>
     <label class="sfield"><span>Where they live <b class="req">*</b></span><input id="ap-city" list="ap-cities" autocomplete="off" placeholder="City or area" required><datalist id="ap-cities">${cities.map(c=>`<option value="${esc(c)}">`).join('')}</datalist></label>
     <fieldset class="ap-circ"><legend>Circle <b class="req">*</b></legend><div>${circleList().map(c=>`<button type="button" data-apc="${esc(c)}" aria-pressed="false"${full&&c!==MEM?' disabled':''}>${esc(c)}</button>`).join('')}</div></fieldset>
     ${full?`<p class="ap-full">Your orbit is full at ${MAX_PEOPLE} people. To add someone new, remove someone first. People kept In memory don’t take a spot.</p>`:roomLeft()<=10?`<p class="ap-full soft">${roomLeft()} of ${MAX_PEOPLE} spots left.</p>`:''}
@@ -1846,10 +1847,15 @@ function addPerson(){closeAddAsk();const full=roomLeft()<=0;const cities=[...new
   m.addEventListener('click',ev=>{if(ev.target===m||ev.target.id==='apNo'||ev.target.closest('[data-ct]')){closeAddAsk();return}const b=ev.target.closest('[data-apc]');if(b){circ=b.dataset.apc;m.querySelectorAll('[data-apc]').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));ok()}});
   f.addEventListener('submit',async ev=>{ev.preventDefault();if(!ok()){m.querySelector('.ap-msg').textContent='First name, where they live and a circle are needed.';return}
     if(circ!==MEM&&roomLeft()<=0){m.querySelector('.ap-msg').textContent=`Your orbit is full at ${MAX_PEOPLE} people.`;return}
-    const id='p-'+Date.now().toString(36);const p={id,first:m.querySelector('#ap-first').value.trim(),last:m.querySelector('#ap-last').value.trim(),city:m.querySelector('#ap-city').value.trim(),circle:circ,years:[THIS_YEAR],touches:[]};
+    const id='p-'+Date.now().toString(36);const p={id,first:m.querySelector('#ap-first').value.trim(),last:m.querySelector('#ap-last').value.trim(),city:m.querySelector('#ap-city').value.trim(),circle:circ,years:[THIS_YEAR],touches:[]};if(pre.orbitUser)p.orbitUser=pre.orbitUser;
     closeAddAsk();people.set(id,p);if(view!=='people')setView('people');openPerson(id);
     if(db){try{await db.doc('contacts/'+id).set(p);toast(`${p.first} added`)}catch(e){status('Couldn’t add just now.')}}});
-  document.body.appendChild(m);setTimeout(()=>m.querySelector('#ap-first').focus(),40)}
+  document.body.appendChild(m);setTimeout(()=>m.querySelector(pre.first?'#ap-city':'#ap-first').focus(),40)}
+// Hooks for the Connections sheet (signals.js): find, link or create the card for someone you're connected with on Orbit.
+window.orbitAddPerson=pre=>addPerson(pre);
+window.orbitFindByUser=uid=>{for(const p of people.values())if(p.orbitUser===uid)return p.id;return null};
+window.orbitLinkUser=(id,uid)=>{if(!people.has(id))return;people.forEach(o=>{if(o.orbitUser===uid&&o.id!==id)save(o.id,{orbitUser:null},true)});save(id,{orbitUser:uid},true)};
+window.orbitPeopleList=()=>[...people.values()].filter(p=>p.circle!==MEM).map(p=>({id:p.id,name:fullName(p),first:p.first||'',last:p.last||'',city:p.city||'',linked:!!p.orbitUser})).sort((a,b)=>a.name.localeCompare(b.name));
 function closeAddAsk(){const m=document.getElementById('addModal');if(m)m.remove()}
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeAddAsk()});
 document.addEventListener('click',async e=>{
