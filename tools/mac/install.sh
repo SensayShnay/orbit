@@ -42,23 +42,33 @@ launchctl bootout "gui/$(id -u)" "$PL" 2>/dev/null
 launchctl bootstrap "gui/$(id -u)" "$PL" 2>/dev/null || launchctl load "$PL" 2>/dev/null
 
 say "${b}One last step: give it permission to read Messages.${n}"
-say "  1. A Settings window is opening on ${b}Full Disk Access${n}, and a Finder window is showing ${b}Orbit Message Sync${n}."
-say "  2. Drag ${b}Orbit Message Sync${n} from Finder into the Full Disk Access list"
-say "     (or click ${b}+${n}, go to your home folder > Applications, and pick it)."
+say "  1. System Settings is opening. Go to ${b}Privacy & Security${n}, then ${b}Full Disk Access${n}."
+say "  2. Click ${b}+${n}, press Command-Shift-G, paste  ~/Applications  and pick ${b}Orbit Message Sync${n}"
+say "     (a Finder window is open on it too, so you can also drag it into the list)."
 say "  3. Make sure its switch is ${b}on${n}."
 sleep 1
-open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles"
+open "x-apple.systempreferences:com.apple.settings.PrivacySecurity.extension?Privacy_AllFiles" 2>/dev/null || open "x-apple.systempreferences:com.apple.preference.security?Privacy_AllFiles" 2>/dev/null || open -b com.apple.systempreferences
 open -R "$APP"
 say ""
+LOG="$DIR/sync.log"
+runsync() {  # launch the helper and follow its log for up to 3 minutes
+  : > "$LOG"; open -g -a "$APP" || { say "Couldn't launch the helper app."; return 1; }
+  local i=0 shown=0
+  while [ $i -lt 180 ]; do sleep 1; i=$((i+1))
+    local n; n=$(wc -l < "$LOG" | tr -d ' ')
+    if [ "$n" -gt "$shown" ]; then tail -n +$((shown+1)) "$LOG" | sed 's/^/     /'; shown=$n; fi
+    if grep -q "Synced\|No access\|Couldn't\|No token" "$LOG" 2>/dev/null; then return 0; fi
+  done
+  say "     (still going after 3 minutes; it will finish in the background)"; return 2; }
 for try in 1 2 3; do
   printf 'Press Enter when the switch is on... '; read -r _ < /dev/tty
   say "Syncing now..."
-  open -W -g -j -a "$APP"
-  last="$(tail -n 1 "$DIR/sync.log" 2>/dev/null)"
+  runsync
+  last="$(tail -n 1 "$LOG" 2>/dev/null)"
   case "$last" in
-    *Synced*) say ""; say "${b}All set.${n} Synced ${last##*Synced }"; say "Orbit will now update on its own twice a day. Check Orbit > Settings > Message sync to see it."; exit 0;;
-    *"No access"*) say "It still can't read Messages. Check that Orbit Message Sync is in the list and switched on.";;
-    *) say "Something went wrong: $last"; break;;
+    *Synced*) say ""; say "${b}All set.${n} ${last#* }"; say "Orbit will now update on its own twice a day. Check Orbit > Settings > Message sync to see it."; exit 0;;
+    *"No access"*) say "It still can't read Messages. Check that Orbit Message Sync is in the Full Disk Access list and switched on.";;
+    *) say "Something went wrong. The log is at: $LOG"; break;;
   esac
 done
 say "You can finish later. It will keep trying twice a day, and Orbit > Settings shows whether it's working."

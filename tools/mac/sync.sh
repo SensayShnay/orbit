@@ -13,10 +13,13 @@ WA="${ORBIT_WHATSAPP:-$HOME/Library/Group Containers/group.net.whatsapp.WhatsApp
 TOKEN="$(cat "$DIR/token" 2>/dev/null)"
 [ -z "$TOKEN" ] && { echo "$(date) No token. Set up Message sync again from Orbit > Settings."; exit 1; }
 TMP="$(mktemp -d)"; trap 'rm -rf "$TMP"' EXIT
+say() { echo "$(date "+%H:%M:%S") $*"; }
+say "Starting Message sync $VERSION"
 
 post() { "$CURL" -fsS -m 120 -H "x-orbit-token: $TOKEN" -H 'content-type: application/json' --data-binary @"$1" "$URL"; }
 status() { printf '{"kind":"status","payload":{"ok":%s,"message":"%s","people":%s,"version":"%s"}}' "$1" "$2" "${3:-0}" "$VERSION" > "$TMP/status.json"; post "$TMP/status.json" >/dev/null 2>&1; }
 
+say "Copying your Messages database (a copy, the original is never touched)"
 # 1. Copy the Messages database (needs Full Disk Access). Reading a copy never touches the real one.
 if ! cp "$MSG" "$TMP/chat.db" 2>/dev/null; then
   status false no_access; echo "$(date) No access to Messages. Turn on Full Disk Access for Orbit Message Sync."; exit 2; fi
@@ -24,10 +27,12 @@ cp "$MSG-wal" "$TMP/chat.db-wal" 2>/dev/null; cp "$MSG-shm" "$TMP/chat.db-shm" 2
 HAVE_WA=0
 if cp "$WA" "$TMP/wa.db" 2>/dev/null; then HAVE_WA=1; cp "$WA-wal" "$TMP/wa.db-wal" 2>/dev/null; cp "$WA-shm" "$TMP/wa.db-shm" 2>/dev/null; fi
 
+say "Asking Orbit which people are in your sphere"
 # 2. Ask Orbit which phone numbers and emails belong to people in your sphere.
 printf '{"kind":"hnorm","payload":{}}' > "$TMP/h.req"
 if ! post "$TMP/h.req" > "$TMP/handles.json"; then echo "$(date) Couldn't reach Orbit (check the internet connection or set up again)."; exit 3; fi
 
+say "Counting messages per person (this can take a minute on a big Messages history)"
 # 3. Count messages per person. Only the handle, the date and who sent it are read. Never the text.
 WA_PART=""
 if [ "$HAVE_WA" = 1 ]; then WA_PART="
@@ -60,6 +65,7 @@ select json_object('kind','stats','payload',coalesce((select json_group_object(c
 if [ ! -s "$TMP/stats.json" ]; then status false read_error; echo "$(date) Couldn't read Messages: $(head -c 300 "$TMP/err.txt")"; exit 5; fi
 PEOPLE="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload'));" 2>/dev/null)"
 
+say "Sending the counts to Orbit"
 # 4. Send the counts to your Orbit.
 if post "$TMP/stats.json" > "$TMP/out.json"; then status true synced "${PEOPLE:-0}"; [ "${PEOPLE:-0}" = 1 ] && W=person || W=people; echo "$(date) Synced ${PEOPLE:-0} $W."
 else status false send_error; echo "$(date) Couldn't send to Orbit."; exit 6; fi
