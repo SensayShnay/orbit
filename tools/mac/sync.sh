@@ -25,7 +25,7 @@ if ! cp "$MSG" "$TMP/chat.db" 2>/dev/null; then
   status false no_access; echo "$(date) No access to Messages. Turn on Full Disk Access for Orbit Message Sync."; exit 2; fi
 cp "$MSG-wal" "$TMP/chat.db-wal" 2>/dev/null; cp "$MSG-shm" "$TMP/chat.db-shm" 2>/dev/null
 HAVE_WA=0
-if cp "$WA" "$TMP/wa.db" 2>/dev/null; then HAVE_WA=1; cp "$WA-wal" "$TMP/wa.db-wal" 2>/dev/null; cp "$WA-shm" "$TMP/wa.db-shm" 2>/dev/null; fi
+if cp "$WA" "$TMP/wa.db" 2>/dev/null; then HAVE_WA=1; cp "$WA-wal" "$TMP/wa.db-wal" 2>/dev/null; cp "$WA-shm" "$TMP/wa.db-shm" 2>/dev/null; say "WhatsApp found, including it"; else say "No WhatsApp on this Mac (that's fine)"; fi
 
 say "Asking Orbit which people are in your sphere"
 # 2. Ask Orbit which phone numbers and emails belong to people in your sphere.
@@ -70,8 +70,11 @@ select json_object('kind','stats','payload',coalesce((select json_group_object(c
 " > "$TMP/stats.json" 2> "$TMP/err.txt"
 if [ ! -s "$TMP/stats.json" ]; then status false read_error; echo "$(date) Couldn't read Messages: $(head -c 300 "$TMP/err.txt")"; exit 5; fi
 PEOPLE="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload'));" 2>/dev/null)"
+NI="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload')) where json_extract(value,'\$.textStats') is not null;" 2>/dev/null)"
+NW="$("$SQL" -batch -noheader :memory: "select count(*) from json_each(json_extract(readfile('$TMP/stats.json'),'\$.payload')) where json_extract(value,'\$.whatsappStats') is not null;" 2>/dev/null)"
+say "Matched ${NI:-0} people on iMessage and ${NW:-0} on WhatsApp"
 
 say "Sending the counts to Orbit"
 # 4. Send the counts to your Orbit.
-if post "$TMP/stats.json" > "$TMP/out.json"; then status true synced "${PEOPLE:-0}"; [ "${PEOPLE:-0}" = 1 ] && W=person || W=people; echo "$(date) Synced ${PEOPLE:-0} $W."
+if post "$TMP/stats.json" > "$TMP/out.json"; then status true "synced i${NI:-0} w${NW:-0}" "${PEOPLE:-0}"; [ "${PEOPLE:-0}" = 1 ] && W=person || W=people; echo "$(date) Synced ${PEOPLE:-0} $W."
 else status false send_error; echo "$(date) Couldn't send to Orbit."; exit 6; fi
