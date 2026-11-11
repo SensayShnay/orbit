@@ -25,3 +25,9 @@ html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 .adm-sig{background:var(--surface2);border-radius:12px;padding:10px;display:flex;flex-direction:column;gap:8px}.adm-sig img{max-width:100%;max-height:240px;object-fit:contain;border-radius:8px;align-self:flex-start}.adm-sig p{margin:0;font-size:15px;white-space:pre-wrap}
 .adm-meta{font-size:12.5px;color:var(--muted)}.adm-acts{display:flex;gap:8px;flex-wrap:wrap}
 .ct-panel{gap:10px}.ct-list{max-height:48vh;margin:0}.onb-person.have{opacity:.5}.onb-person.have .onb-tick{visibility:hidden}
+.ms-opt{display:inline-block;margin-left:8px;font:500 12px var(--body);color:var(--muted);vertical-align:middle}
+.ms-facts{display:flex;flex-direction:column;gap:8px;margin:12px 0 4px}
+.ms-fact{display:flex;flex-direction:column;gap:2px;padding:10px 12px 10px 14px;border-radius:12px;background:var(--surface2);border-left:3px solid var(--line2);font-size:14px;line-height:1.45}
+.ms-fact b{font-size:13.5px}.ms-fact span{color:var(--muted)}.ms-fact a{color:var(--accent)}
+.ms-fact.yes{border-left-color:var(--inner)}.ms-fact.no{border-left-color:var(--danger)}.ms-fact.no b{color:var(--danger)}
+.ms-mail{margin:8px 0 0;min-height:1em;font-size:14px;color:var(--ink)}

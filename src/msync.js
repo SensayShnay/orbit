@@ -12,9 +12,17 @@ function state(){if(!info&&!st)return ['off','Not set up'];
   if(st&&st.at){const old=(Date.now()-new Date(st.at))>3*864e5;return [old?'warn':'ok',(old?'Hasn’t synced since ':'Working · last synced ')+ago(st.at)+' · '+st.people+' '+(st.people===1?'person':'people')+(old?'. Is your Mac on and awake sometimes?':'')]}
   return ['warn','Waiting for your Mac. Run the setup command, then turn on Full Disk Access.']}
 function paint(){const el=document.getElementById('msyncCard');if(!el)return;const [k,t]=state(),on=!!(info||st);
-  el.innerHTML=`<h3>Message sync</h3><p class="lede">See when you last texted someone, without Orbit ever reading your messages. It runs on a Mac signed in to the same iMessage as your phone, and WhatsApp too if it’s on that Mac.</p>
+  el.innerHTML=`<h3>Message sync <small class="ms-opt">Optional · needs a Mac</small></h3>
+   <p class="lede">A small helper for your Mac that tells Orbit when you last talked to each person, so Reach out and drift alerts work without you logging anything.</p>
+   <div class="ms-facts">
+    <div class="ms-fact yes"><b>What it reads</b><span>Who you messaged and when, from 1-on-1 chats in Messages (and WhatsApp if it’s on your Mac).</span></div>
+    <div class="ms-fact yes"><b>What it sends to Orbit</b><span>Message counts and dates, only for people already in your sphere. Everyone else stays on your Mac.</span></div>
+    <div class="ms-fact no"><b>What it never does</b><span>Read, store or send the words in any message. Not to Orbit, not to anyone.</span></div>
+    <div class="ms-fact"><b>Your control</b><span>Turn it off here any time. The code it uses stops working the moment you do, and the helper can be removed from your Mac in one step. The script is <a href="https://github.com/SensayShnay/orbit/blob/main/tools/mac/sync.sh" target="_blank" rel="noopener">open to read</a>.</span></div>
+   </div>
    <p class="ms-status ${k}"><i></i><span>${t}</span></p>
-   <div class="ms-acts">${on?'<button type="button" class="btn small" data-ms="setup">Set up again</button><button type="button" class="btn small" data-ms="off">Turn off</button>':'<button type="button" class="btn small primary" data-ms="setup">Set up on my Mac</button>'}<a class="ms-how" href="${HOW}" target="_blank" rel="noopener">How it works</a></div>`}
+   <div class="ms-acts">${on?'<button type="button" class="btn small" data-ms="email">Email me the setup again</button><button type="button" class="btn small" data-ms="setup">Show it here</button><button type="button" class="btn small" data-ms="off">Turn off</button>':'<button type="button" class="btn small primary" data-ms="email">Email me the setup</button><button type="button" class="btn small" data-ms="setup">Show it here</button>'}<a class="ms-how" href="${HOW}" target="_blank" rel="noopener">Full details</a></div>
+   <p class="ms-mail" id="msMail" role="status"></p>`}
 async function load(){const sb=window.orbitSB;if(!sb)return;try{const r=await sb.rpc('my_sync_token_info');info=r.data||null}catch(_){}loaded=true;paint()}
 function sheet(html){close();const d=document.createElement('div');d.className='sg-sheet';d.id='msSheet';d.innerHTML=`<div class="sg-panel ms-panel" role="dialog" aria-modal="true" aria-labelledby="msT">${html}</div>`;
   d.addEventListener('click',e=>{if(e.target===d||e.target.closest('[data-ms-close]'))close()});document.body.appendChild(d);return d}
@@ -42,7 +50,14 @@ async function off(){if(!confirm('Turn off Message sync? Your Mac will stop send
    <p class="sg-note">Your Mac can’t send anything anymore. To remove the helper from the Mac too, paste this into Terminal there:</p><pre class="ms-cmd">${esc(cmd)}</pre>
    <div class="ms-row"><button type="button" class="sg-cta" id="msCopy">Copy</button><button type="button" class="sg-ghost wide" data-ms-close>Done</button></div>`);
   d.querySelector('#msCopy').onclick=e=>copy(cmd,e.currentTarget)}
-document.addEventListener('click',e=>{const b=e.target.closest('[data-ms]');if(!b)return;e.preventDefault();if(b.dataset.ms==='setup')setup();if(b.dataset.ms==='off')off()});
+async function email(btn){const out=document.getElementById('msMail');btn.disabled=true;const was=btn.textContent;btn.textContent='Sending…';if(out)out.textContent='';
+  try{const {data,error}=await window.orbitSB.functions.invoke('setup-email',{body:{}});
+    if(error){let code='';try{const b=await error.context.json();code=b.code}catch(_){}
+      if(out)out.textContent=code==='not_configured'?'Email isn’t switched on for Orbit yet. Use Show it here instead.':code==='rate_limited'?'You’ve had a few of these today. Check your inbox and spam, or use Show it here.':'Couldn’t send the email just now. Try Show it here.';return}
+    info={created_at:new Date().toISOString()};st=null;paint();const o2=document.getElementById('msMail');if(o2)o2.textContent=`Sent to ${data&&data.to?data.to:'your email'}. Open it on your Mac and follow the steps. If you had Message sync set up before, that old code no longer works.`}
+  catch(_){if(out)out.textContent='Couldn’t send the email just now. Try Show it here.'}
+  finally{btn.disabled=false;btn.textContent=was}}
+document.addEventListener('click',e=>{const b=e.target.closest('[data-ms]');if(!b)return;e.preventDefault();if(b.dataset.ms==='setup')setup();if(b.dataset.ms==='off')off();if(b.dataset.ms==='email')email(b)});
 new MutationObserver(()=>{const el=document.getElementById('msyncCard');if(el&&!el.firstChild){paint();load()}}).observe(document.body,{childList:true,subtree:true});
 window.orbitOpenMessageSync=()=>setup();
 window.claude.use('db').then(db=>{if(!db)return;db.collection('meta').onSnapshot(s=>{const d=s.docs.find(x=>x.id==='syncstatus');st=d?d.data():null;paint()})});
